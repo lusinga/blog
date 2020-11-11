@@ -1,0 +1,60 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta charset="utf-8"><title>操作系统形式化验证实践教程(4) - 工具环境 - 哲学系炼金术指南</title><meta name="description" content=""><meta name="author" content=""><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1"><link rel="stylesheet" href="assets/css/bulma.min.css"><link rel="stylesheet" href="assets/css/app.css"><!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]--><link rel="shortcut icon" href=""></head><body dir="ltr"><nav class="columns navbar"><div class="column logo is-3 is-offset-1"><a class="is-brand" href="index.html">哲学系炼金术指南</a></div></nav><div class="columns content"><div class="column is-2-desktop is-3-widescreen is-hidden-touch"></div><div class="column article-container is-11-tablet is-8-desktop is-6-widescreen"><div class="breadcrumb-area"><a href="index.html" class="breadcrumb-item">Home</a><span class="breadcrumb-delimiter"> &gt; </span><a href="fv4.html" class="breadcrumb-item">操作系统形式化验证实践教程(4) - 工具环境</a></div><h1 class="article-title">操作系统形式化验证实践教程(4) - 工具环境</h1><div class="article"><p>如前面我们所了解的，Isabelle/HOL是套相当复杂的系统，它的底层基于Standard ML语言，它自己使用HOL和Isar语言，它可以生成ocaml，haskell和scala的代码，它有要使用到很多的自动定理证明工具。</p><p>除了相当强大的IDE环境，Isabelle也提供了命令行工具和大量的配置。</p><h2 id="isabelle环境">Isabelle环境 <a class="markdownIt-Anchor" href="#isabelle环境">#</a></h2><p>可以通过isabelle getenv -a命令获取Isabelle的详细配置信息：</p><p>我们分类列举一些常见的配置项，通过这些大家可以理解到Isabelle/HOL底层的架构：</p><ul><li>基本参数<ul><li>ISABELLE_HOME=/workspace/xulun/Isabelle2020</li><li>ISABELLE_ROOT=/workspace/xulun/Isabelle2020</li><li>ISABELLE_PLATFORM64=x86_64-linux</li><li>ISABELLE_PLATFORM_FAMILY=linux</li><li>ISABELLE_COMPONENTS_BASE=/home/ziying.liuziying/.isabelle/contrib</li><li>ISABELLE_HEAPS=/home/ziying.liuziying/.isabelle/Isabelle2020/heaps</li><li>ISABELLE_FILE_FORMATS=isabelle.Bibtex$File_Format</li><li>ISABELLE_DOCS=/workspace/xulun/Isabelle2020/doc:/workspace/xu - lun/Isabelle2020/src/Tools/jEdit/dist/doc</li><li>ISABELLE_LOGIC=HOL</li></ul></li><li>Standard ML相关<ul><li>ML_SYSTEM=polyml-5.8.1</li><li>ML_PLATFORM=x86_64_32-linux</li><li>ML_OPTIONS=--minheap 500</li><li>ML_IDENTIFIER=polyml-5.8.1_x86_64_32-linux</li><li>ML_SOURCES=/workspace/xulun/Isabelle2020/contrib/polyml-5.8.1-20200228/src</li><li>ML_HOME=/workspace/xulun/Isabelle2020/contrib/polyml-5.8.1-20200228/x86_64_32-linux</li><li>POLYML_HOME=/workspace/xulun/Isabelle2020/contrib/polyml-5.8.1-20200228</li></ul></li><li>Java相关<ul><li>ISABELLE_JAVA_PLATFORM=x86_64-linux</li><li>ISABELLE_JAVA_SYSTEM_OPTIONS=-server -Dfile.encoding=UTF-8 -Disabelle.threads=0 -Djdk.gtk.version=2.2</li><li>ISABELLE_TOOL_JAVA_OPTIONS=-Djava.awt.headless=true -Xms512m -Xmx2560m -Xss16m</li><li>SCALA_HOME=/workspace/xulun/Isabelle2020/contrib/scala-2.12.10</li><li>ISABELLE_SCALA_SCRIPT=/workspace/xulun/Isabelle2020/bin/isabelle_scala_script</li></ul></li><li>ocaml相关<ul><li>ISABELLE_OCAML_VERSION=ocaml-base-compiler.4.05.0</li></ul></li><li>Haskell相关<ul><li>ISABELLE_STACK_ROOT=/home/ziying.liuziying/.stack</li><li>ISABELLE_GHC_VERSION=ghc-8.6.4</li></ul></li><li>自动定理证明相关<ul><li>ISABELLE_ATP=/workspace/xulun/Isabelle2020/src/HOL/Tools/ATP</li><li>Z3_HOME=/workspace/xulun/Isabelle2020/contrib/z3-4.4.0pre-3/x86_64-linux</li><li>VAMPIRE_HOME=/workspace/xulun/Isabelle2020/contrib/vampire-4.2.2/x86_64-linux</li><li>CVC4_HOME=/workspace/xulun/Isabelle2020/contrib/cvc4-1.5-5/x86_64-linux</li><li>CVC4_INSTALLED=yes</li><li>E_HOME=/workspace/xulun/Isabelle2020/contrib/e-2.0-3/x86_64-linux</li><li>VAMPIRE_VERSION=4.2.2pre</li><li>CVC4_SOLVER=/workspace/xulun/Isabelle2020/contrib/cvc4-1.5-5/x86_64-linux/cvc4</li><li>Z3_SOLVER=/workspace/xulun/Isabelle2020/contrib/z3-4.4.0pre-3/x86_64-linux/z3</li><li>Z3_VERSION=4.4.0pre</li></ul></li><li>编辑器相关<ul><li>JEDIT_HOME=/workspace/xulun/Isabelle2020/src/Tools/jEdit</li><li>JEDIT_SETTINGS=/home/ziying.liuziying/.isabelle/Isabelle2020/jedit</li></ul></li><li>LaTeX相关<ul><li>ISABELLE_LATEX=latex -file-line-error</li><li>ISABELLE_PDFLATEX=pdflatex -file-line-error</li></ul></li></ul><h2 id="isabelle会话">Isabelle会话 <a class="markdownIt-Anchor" href="#isabelle会话">#</a></h2><p>证明是一个复杂的系统，涉及到很多库和文档等的协作。所以除了每个定理文件之外，我们还需要一个类似于Makefile一样的工程组织文件，在Isabelle中被称为会话ROOT规范。文件名就叫ROOT。</p><p>我们就不像规范一样描述结构了，直接上个真实的例子，这个例子来源于seL4的C-parser：</p><pre class="hljs"><code>chapter &quot;C-Parser&quot;
+
+session &quot;Simpl-VCG&quot; = Word_Lib +
+  sessions
+    &quot;HOL-Statespace&quot;
+  theories
+    &quot;Simpl/Vcg&quot;
+
+session CParser = &quot;Simpl-VCG&quot; +
+  sessions
+    &quot;HOL-Library&quot;
+    &quot;HOL-Word&quot;
+    &quot;Lib&quot;
+  theories
+    &quot;CTranslation&quot;
+</code></pre><h3 id="chapter">Chapter <a class="markdownIt-Anchor" href="#chapter">#</a></h3><p>首先一个ROOT可以有个Chapter来描述下这个规范的名字，将来用于生成browse info时使用，如果没有指定的话默认为：“Unsorted”。总之就是个名字，没有形式化的含义。</p><h3 id="session">session <a class="markdownIt-Anchor" href="#session">#</a></h3><p>session来定义一个会话单元，可以像面向对象编程一样继承自某个父会话。<br>格式为：</p><pre class="hljs"><code>session 会话名 = 父会话名 + 
+sessions
+引用的会话列表
+theories
+定理列表
+</code></pre><p>session中还可以指定路径，用in表示。另外还可以指定options。不谈语法，我们还是例子说话：</p><pre class="hljs"><code>session AsmRefineTest in &quot;testfiles&quot; = AsmRefine +
+  options [threads = 1] (* use of unsync references in test files *)
+  sessions
+    CParser
+  theories
+    &quot;global_asm_stmt_gref&quot;
+    &quot;inf_loop_gref&quot;
+    &quot;global_array_swap_gref&quot;
+</code></pre><h3 id="document_files">document_files <a class="markdownIt-Anchor" href="#document_files">#</a></h3><p>除了会话和定理之外，文档生成也是定理证明的重要部分。可以在options中指定输出的文档类型，然后通过document_files区段来指定文档要引用的文件。document_files也可以通过in来指定路径。我们还是看个例子：</p><pre class="hljs"><code>session ASpecDoc in &quot;abstract&quot; = Word_Lib +
+  options [document=pdf]
+  sessions
+    &quot;HOL-Library&quot;
+    Lib
+    ExecSpec
+  theories
+    &quot;Intro_Doc&quot;
+  theories
+    &quot;Syscall_A&quot;
+    &quot;Glossary_Doc&quot;
+    (* &quot;KernelInit_A&quot; *)
+  document_files
+    &quot;VERSION&quot;    (* generated by `make ASpec` *)
+    &quot;gitrev.tex&quot; (* generated by `make ASpec` *)
+    &quot;root.tex&quot;
+    &quot;root.bib&quot;
+    &quot;defs.bib&quot;
+    &quot;ulem.sty&quot;
+    &quot;imgs/CDT.pdf&quot;
+    &quot;imgs/seL4-background_01.pdf&quot;
+    &quot;imgs/seL4-background_03.pdf&quot;
+    &quot;imgs/seL4-background_04.pdf&quot;
+    &quot;imgs/sel4objects_01.pdf&quot;
+    &quot;imgs/sel4objects_05.pdf&quot;
+    &quot;imgs/sel4_internals_01.pdf&quot;
+  document_files (in &quot;document/$L4V_ARCH&quot;)
+    &quot;ARCH.tex&quot;
+</code></pre><h2 id="小结">小结 <a class="markdownIt-Anchor" href="#小结">#</a></h2><p>环境配好，ROOT文件写好，我们就可以通过isabelle build命令去执行编译和文档生成的命令了。</p><p>下一步，我们就直击一个形式化验证操作系统的现场，去看看seL4是如何进行形式化验证的。需要的基础后面用到我们会慢慢展开。</p></div><div dir="ltr" class="level article-bar is-mobile"><div class="level-item has-text-centered"><a title="previous page" class="previouse-article-link" href="fv3.html"><span class="icon icon-previous" data-icon="previous"></span><span class="link-content">&laquo; Previous</span></a></div><div class="level-item has-text-centered"><a title="font size" class="link-item link-item-size"><span class="icon icon-size" data-icon="size"></span></a></div><div class="level-item has-text-centered"><a title="table of content" class="link-item link-item-toc"><span class="icon icon-toc" data-icon="toc"></span></a></div><div class="level-item has-text-centered"><a title="top" href="#"><span class="icon icon-up" data-icon="up"></span> <span class="link-content">⤊ Top</span></a></div><div class="level-item has-text-centered"><a title="next page" class="next-article-link" href="fv5.html"><span class="icon icon-next" data-icon="next"></span><span class="link-content">Next &raquo;</span></a></div></div></div><div class="column is-2-widescreen is-hidden"></div></div><div class="columns foot"><div class="column is-3 is-offset-9 build-by">Build by <a href="https://github.com/ruanyf/loppo" target="_blank">Loppo</a> 0.6.20</div></div><div class="book-toc notification is-warning is-hidden"><h3>Table of chapters &nbsp;<span class="title-close"><a class="button is-danger"> Close</a></span></h3><ul class="chapter-area"><li class="chapter-item"><a href="fv1.html">操作系统形式化验证实践教程(1) - 证明第一个定理</a></li><li class="chapter-item"><a href="fv2.html">操作系统形式化验证实践教程(2) - HOL列表与集合</a></li><li class="chapter-item"><a href="fv3.html">操作系统形式化验证实践教程(3) - 自动证明工具</a></li><li class="chapter-item chapter-item-current"><a href="fv4.html">操作系统形式化验证实践教程(4) - 工具环境</a></li><li class="chapter-item"><a href="fv5.html">操作系统形式化验证实践教程(5) - 搭建seL4环境</a></li></ul></div><div class="progress-indicator"></div><!-- SCRIPTS --><script>var LOPPO={current_path:"fv4.md",relative_root_path:"",article_toc:'<ul class="markdownIt-TOC">\n<li><a href="#isabelle%E7%8E%AF%E5%A2%83">Isabelle环境</a></li>\n<li><a href="#isabelle%E4%BC%9A%E8%AF%9D">Isabelle会话</a>\n<ul>\n<li><a href="#chapter">Chapter</a></li>\n<li><a href="#session">session</a></li>\n<li><a href="#document_files">document_files</a></li>\n</ul>\n</li>\n<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>\n</ul>\n'}</script><script src="assets/js/app.js"></script></body></html>

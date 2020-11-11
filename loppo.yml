@@ -1,4 +1,4 @@
-dir: docs
+dir: md
 output: blog
 site: 哲学系炼金术指南
 theme: oceandeep
