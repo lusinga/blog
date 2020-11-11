@@ -1,0 +1,8 @@
+dir: docs
+output: blog
+site: 哲学系炼金术指南
+theme: oceandeep
+customization: false
+themeDir: loppo-theme
+direction: ltr
+id: web
