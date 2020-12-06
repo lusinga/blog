@@ -1,0 +1,88 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta charset="utf-8"><title>操作系统形式化验证实践教程(11) - 结构化证明语言Isar - 哲学系炼金术士</title><meta name="description" content=""><meta name="author" content=""><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1"><link rel="stylesheet" href="../assets/css/bulma.min.css"><link rel="stylesheet" href="../assets/css/app.css"><!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]--><link rel="shortcut icon" href=""></head><body dir="ltr"><nav class="columns navbar"><div class="column logo is-3 is-offset-1"><a class="is-brand" href="../index.html">哲学系炼金术士</a></div></nav><div class="columns content"><div class="column is-2-desktop is-3-widescreen is-hidden-touch"></div><div class="column article-container is-11-tablet is-8-desktop is-6-widescreen"><div class="breadcrumb-area"><a href="../index.html" class="breadcrumb-item">Home</a><span class="breadcrumb-delimiter"> &gt; </span><a href="../操作系统形式化验证/index.html" class="breadcrumb-item">操作系统形式化验证</a><span class="breadcrumb-delimiter"> &gt; </span><a href="../操作系统形式化验证/fv11.html" class="breadcrumb-item">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</a></div><h1 class="article-title">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</h1><div class="article"><h2 id="结构化证明语言isar基本语法">结构化证明语言Isar基本语法 <a class="markdownIt-Anchor" href="#结构化证明语言isar基本语法">#</a></h2><p>apply方法和by方法虽然可以完成功能，但是看起来更像是命令式语言。使用Isar语言，还可以写得更加形式化一点。</p><p>Isar的格式看起来像这样:</p><pre class="hljs"><code>proof
+  assume &quot;公式1&quot;
+  from “公式1&quot; have &quot;公式2&quot; by 方法
+  ...
+  from &quot;公式n&quot; show &quot;结论&quot; by 方法
+qed
+</code></pre><p>虽然换了种写法，但是其实核心内容并没有变。</p><h3 id="直接proof指定方法">直接proof指定方法 <a class="markdownIt-Anchor" href="#直接proof指定方法">#</a></h3><p>最简单的写法，就是把by的内容放到proof语句之后，然后就直接qed了。<br>我们看7个例子：</p><pre class="hljs"><code>lemma A1: &quot;A ⟹ (B⟹A)&quot;
+proof(erule thin_rl,Pure.assumption)
+qed
+
+lemma A2 : &quot;(A ⟹ (B⟹C))  ⟹ ((A⟹B) ⟹ (A⟹C))&quot;
+proof(erule meta_impE,assumption,assumption)
+qed
+
+lemma A3: &quot;(A∧B) ⟹ A&quot;
+proof(erule conjunct1)
+qed
+
+lemma A4: &quot;(A∧B) ⟹ B&quot;
+proof(erule conjunct2)
+qed
+
+lemma A5: &quot;A ⟹ (B ⟹ (A∧B))&quot;
+proof(erule conjI,assumption)
+qed
+
+lemma A6: &quot;A ⟹ (A ∨ B)&quot;
+proof(erule disjI1)
+qed
+
+lemma A7: &quot;B ⟹ (A ∨ B)&quot;
+proof(erule disjI2)
+qed
+</code></pre><h3 id="assume-have-show">assume have show <a class="markdownIt-Anchor" href="#assume-have-show">#</a></h3><p>下面我们尝试用assume...have...show的方法改写一下。proof语句的参数我们给个&quot;-&quot;，表示空值：</p><pre class="hljs"><code>lemma &quot;(A ⟹ (B⟹C))  ⟹ ((A⟹B) ⟹ (A⟹C))&quot;
+proof -
+  assume Fact0: &quot;(A ⟹ (B⟹C))&quot;
+  from Fact0 show &quot;((A⟹B) ⟹ (A⟹C))&quot; by (rule meta_impE)
+qed
+</code></pre><h3 id="this">this <a class="markdownIt-Anchor" href="#this">#</a></h3><p>上一节我们在assume和show中使用了标签，但是Isar认为使用标签是不好的，容易给词法分析造成困扰。<br>如果使用上一条中的公式，我们就直接使用this来指代，上一节的例子就变成这样：</p><pre class="hljs"><code>lemma &quot;(A ⟹ (B⟹C))  ⟹ ((A⟹B) ⟹ (A⟹C))&quot;
+proof -
+  assume &quot;(A ⟹ (B⟹C))&quot;
+  from this show &quot;((A⟹B) ⟹ (A⟹C))&quot; by (rule meta_impE)
+qed
+</code></pre><h3 id="then">then <a class="markdownIt-Anchor" href="#then">#</a></h3><p>尽可能使用this之后，我们发现from this用的很广泛，于是我们可以给from this起一个别名叫then。于是上节的例子可以写成下面这样：</p><pre class="hljs"><code>lemma &quot;(A ⟹ (B⟹C))  ⟹ ((A⟹B) ⟹ (A⟹C))&quot;
+proof -
+  assume &quot;(A ⟹ (B⟹C))&quot;
+  then show &quot;((A⟹B) ⟹ (A⟹C))&quot; by (rule meta_impE)
+qed
+</code></pre><h3 id="thus和hence">thus和hence <a class="markdownIt-Anchor" href="#thus和hence">#</a></h3><p>换成then之后，我们发现from this终于被隐藏起来了。但是，大量的then have和then show又出来了。于是我们可以再简化一下，给then have起个别名hence，给then show起个别名thus。<br>于是上节的例子可以写成这样：</p><pre class="hljs"><code>lemma &quot;(A ⟹ (B⟹C))  ⟹ ((A⟹B) ⟹ (A⟹C))&quot;
+proof -
+  assume &quot;(A ⟹ (B⟹C))&quot;
+  thus &quot;((A⟹B) ⟹ (A⟹C))&quot; by (rule meta_impE)
+qed
+</code></pre><h2 id="假设拆分">假设拆分 <a class="markdownIt-Anchor" href="#假设拆分">#</a></h2><p>当lemma比较长时，可以将其拆分成几个独立的假设，然后在proof中使用。<br>我们来看个例子：</p><pre class="hljs"><code>lemma impE_2:
+  assumes 1:‹P⟶Q›
+  and 2: ‹Q⟹R›
+  and 3: ‹P⟶Q ⟹ P›
+  shows ‹R›
+proof -
+  from 3 and 1 have ‹P› by simp
+  with 1 have ‹Q› by (rule impE)
+  with 2 show ‹R› by simp
+qed
+</code></pre><p>这里我们又使用了一个新的缩写with，with xxx等于from xxx this，是from的一个语法糖。<br>其中的&quot;‹&quot;,写作&lt;open&gt;。同样“›”写作&lt;close&gt;. 也可以通过&quot;来输入，然后IDE中会提示。</p><p>我们来看ASCII源码：</p><pre class="hljs"><code>lemma impE_2:
+  assumes 1:\&lt;open&gt;P\&lt;longrightarrow&gt;Q\&lt;close&gt;
+  and 2: \&lt;open&gt;Q\&lt;Longrightarrow&gt;R\&lt;close&gt;
+  and 3: \&lt;open&gt;P\&lt;longrightarrow&gt;Q \&lt;Longrightarrow&gt; P\&lt;close&gt;
+  shows \&lt;open&gt;R\&lt;close&gt;
+proof -
+  from 3 and 1 have \&lt;open&gt;P\&lt;close&gt; by simp
+  with 1 have \&lt;open&gt;Q\&lt;close&gt; by (rule impE)
+  with 2 show \&lt;open&gt;R\&lt;close&gt; by simp
+qed
+</code></pre><p>对了，针对这样分立条件的，不使用Isar的情况下该如何写呢？我们可以使用using来使用假设们然后再用by来引用证明方法，来看个例子：</p><pre class="hljs"><code>lemma impE_3:
+  assumes 1:‹P⟶Q›
+  and 2: ‹Q⟹R›
+  and 3: ‹P⟶Q ⟹ P›
+shows ‹R›
+  using &quot;1&quot; &quot;2&quot; &quot;3&quot; by blast
+</code></pre><p>巩固下，再来个例子：</p><pre class="hljs"><code>lemma notE_2:
+  assumes 1: ‹¬P›
+and 2:‹¬P ⟹ P›
+shows ‹R›
+  using &quot;1&quot; &quot;2&quot; by auto
+</code></pre><h2 id="小结">小结 <a class="markdownIt-Anchor" href="#小结">#</a></h2><p>Isar语言的出现，是希望能够能通过一些语法糖，让证明看起来更像是用自然语言书写，提升可读性。<br>但是其基本原理跟没有Isar语言框架是一致的。数理逻辑知识目前仍然是主要要攻克的点，而非语言和框架。</p></div><div dir="ltr" class="level article-bar is-mobile"><div class="level-item has-text-centered"><a title="previous page" class="previouse-article-link" href="../操作系统形式化验证/fv10.html"><span class="icon icon-previous" data-icon="previous"></span><span class="link-content">&laquo; Previous</span></a></div><div class="level-item has-text-centered"><a title="font size" class="link-item link-item-size"><span class="icon icon-size" data-icon="size"></span></a></div><div class="level-item has-text-centered"><a title="table of content" class="link-item link-item-toc"><span class="icon icon-toc" data-icon="toc"></span></a></div><div class="level-item has-text-centered"><a title="top" href="#"><span class="icon icon-up" data-icon="up"></span> <span class="link-content">⤊ Top</span></a></div><div class="level-item has-text-centered"><a title="next page" class="next-article-link" href="../操作系统形式化验证/fv12.html"><span class="icon icon-next" data-icon="next"></span><span class="link-content">Next &raquo;</span></a></div></div></div><div class="column is-2-widescreen is-hidden"></div></div><div class="columns foot"><div class="column is-3 is-offset-9 build-by">Build by <a href="https://github.com/ruanyf/loppo" target="_blank">Loppo</a> 0.6.20</div></div><div class="book-toc notification is-warning is-hidden"><h3>Table of chapters &nbsp;<span class="title-close"><a class="button is-danger"> Close</a></span></h3><ul class="chapter-area"><li class="chapter-item"><a href="../操作系统形式化验证/index.html">操作系统形式化验证</a>&nbsp;<a class="first-level-collapse"><span class="icon icon-collapse" data-icon="collapse"></span></a></li><ul class="chapter-level-1 chapter-level-1-current"><li class="chapter-item"><a href="../操作系统形式化验证/fv1.html">操作系统形式化验证实践教程(1) - 证明第一个定理</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv10.html">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</a></li><li class="chapter-item chapter-item-current"><a href="../操作系统形式化验证/fv11.html">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv12.html">操作系统形式化验证实践教程(12) - 经典命题逻辑与公式查错方法</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv13.html">操作系统形式化验证实践教程(13) - 符号的输入方法</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv2.html">操作系统形式化验证实践教程(2) - HOL列表与集合</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv3.html">操作系统形式化验证实践教程(3) - 自动证明工具</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv4.html">操作系统形式化验证实践教程(4) - 工具环境</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv5.html">操作系统形式化验证实践教程(5) - 搭建seL4环境</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv6.html">操作系统形式化验证实践教程(6) - 解析C源代码</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv7.html">操作系统形式化验证实践教程(7) - C代码的自动验证</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv8.html">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv9.html">操作系统形式化验证实践教程(9) - 规范与证明概述</a></li></ul><li class="chapter-item"><a href="../符号执行/index.html">符号执行</a>&nbsp;<a class="first-level-collapse"><span class="icon icon-expand" data-icon="expand"></span></a></li><ul class="chapter-level-1"><li class="chapter-item"><a href="../符号执行/ se1.html">符号执行(1) - 自动生成覆盖率用例之利器</a></li></ul></ul></div><div class="progress-indicator"></div><!-- SCRIPTS --><script>var LOPPO={current_path:"操作系统形式化验证/fv11.md",relative_root_path:"../",article_toc:'<ul class="markdownIt-TOC">\n<li><a href="#%E7%BB%93%E6%9E%84%E5%8C%96%E8%AF%81%E6%98%8E%E8%AF%AD%E8%A8%80isar%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95">结构化证明语言Isar基本语法</a>\n<ul>\n<li><a href="#%E7%9B%B4%E6%8E%A5proof%E6%8C%87%E5%AE%9A%E6%96%B9%E6%B3%95">直接proof指定方法</a></li>\n<li><a href="#assume-have-show">assume have show</a></li>\n<li><a href="#this">this</a></li>\n<li><a href="#then">then</a></li>\n<li><a href="#thus%E5%92%8Chence">thus和hence</a></li>\n</ul>\n</li>\n<li><a href="#%E5%81%87%E8%AE%BE%E6%8B%86%E5%88%86">假设拆分</a></li>\n<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>\n</ul>\n'}</script><script src="../assets/js/app.js"></script></body></html>

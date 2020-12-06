@@ -1,0 +1,146 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta charset="utf-8"><title>操作系统形式化验证实践教程(10) - 一阶直觉逻辑 - 哲学系炼金术士</title><meta name="description" content=""><meta name="author" content=""><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1"><link rel="stylesheet" href="../assets/css/bulma.min.css"><link rel="stylesheet" href="../assets/css/app.css"><!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]--><link rel="shortcut icon" href=""></head><body dir="ltr"><nav class="columns navbar"><div class="column logo is-3 is-offset-1"><a class="is-brand" href="../index.html">哲学系炼金术士</a></div></nav><div class="columns content"><div class="column is-2-desktop is-3-widescreen is-hidden-touch"></div><div class="column article-container is-11-tablet is-8-desktop is-6-widescreen"><div class="breadcrumb-area"><a href="../index.html" class="breadcrumb-item">Home</a><span class="breadcrumb-delimiter"> &gt; </span><a href="../操作系统形式化验证/index.html" class="breadcrumb-item">操作系统形式化验证</a><span class="breadcrumb-delimiter"> &gt; </span><a href="../操作系统形式化验证/fv10.html" class="breadcrumb-item">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</a></div><h1 class="article-title">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</h1><div class="article"><p>前面我们用了九讲的篇幅把seL4验证操作系统的地图给大家迅速过了一遍，基础好的同学已经可以基于前面的知识开始自己的工作了。<br>对于只学过离散数学，而没学过专门数理逻辑的同学，我们稍微补充一点相关的知识。</p><p>我们在Isabelle中使用的一阶逻辑主要是直觉主义的一阶逻辑，当然我们也支持经典逻辑。</p><h2 id="直觉主义逻辑">直觉主义逻辑 <a class="markdownIt-Anchor" href="#直觉主义逻辑">#</a></h2><p>直觉主义逻辑intuitionistic logic的主要特点是不接受排中律，即要么命题为真或者为假。<br>也就是说，经典一阶逻辑的定理：&quot;P ∨ ¬P&quot;，在直觉主义逻辑中是不存在的。<br>直觉主义逻辑起源于布劳威尔Brouwer关于数学中构造性证明的研究。在构造性证明中不能使用反证法。直觉主义的主要原理是，通过构造性证明来建立数学命题的真。命题联结词的意义通过证明和构造来解释：</p><ol><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>∧</mo><mi>β</mi></mrow><annotation encoding="application/x-tex">\alpha\land\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.55556em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∧</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>的证明由<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>的证明和<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>的证明构成</li><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>∨</mo><mi>β</mi></mrow><annotation encoding="application/x-tex">\alpha\lor\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.55556em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∨</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>的证明由<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>的证明或者<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>的证明构成</li><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>→</mo><mi>β</mi></mrow><annotation encoding="application/x-tex">\alpha\to\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>的证明是一个构造<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>的每个证明都转化为<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>的证明构成</li><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>⊥</mo></mrow><annotation encoding="application/x-tex">\perp</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mrel">⊥</span></span></span></span>没有证明</li><li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">¬</mi><mi>α</mi></mrow><annotation encoding="application/x-tex">\lnot\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord">¬</span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>的证明是一个构造使得对<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>都得到<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>⊥</mo></mrow><annotation encoding="application/x-tex">\perp</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mrel">⊥</span></span></span></span>的证明。</li></ol><p>这种证明解释，是布劳威尔、柯尔哥莫洛夫Kolmogorov和海廷Heyting提出的，也称为BHK解释。</p><h2 id="直觉一阶逻辑编程">直觉一阶逻辑编程 <a class="markdownIt-Anchor" href="#直觉一阶逻辑编程">#</a></h2><p>下面我们将能力限制到直觉一阶逻辑范围内，也就是我们只引入IFOL的库，我们向亚里士多德致敬，先来个三段论：</p><pre class="hljs"><code>theory fol1
+  imports IFOL
+begin
+lemma mp2 : &quot;⟦ P ⟹ Q; P⟧ ⟹ Q&quot;
+  by (erule meta_mp)
+end
+</code></pre><p>by是apply和done的简写，如果写成apply...done的形式是这样:</p><pre class="hljs"><code>lemma mp3 : &quot;⟦ P ⟹ Q; P⟧ ⟹ Q&quot;
+  apply(erule meta_mp, assumption)
+  done
+</code></pre><p>这叫做mp规则，中文叫做肯定前件规则。</p><p>这么基础的逻辑问题，当然系统里早就有各种实现了，在最基础的Pure包中就有了：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. (P ⟹ Q) ⟹ P ⟹ Q 
+Auto solve_direct: the current goal can be solved directly with
+  Pure.cut_rl:
+    (PROP ?psi ⟹ PROP ?theta) ⟹
+    PROP ?psi ⟹ PROP ?theta
+  Pure.meta_impE:
+    (PROP ?P ⟹ PROP ?V) ⟹
+    PROP ?P ⟹ (PROP ?V ⟹ PROP ?W) ⟹ PROP ?W
+  Pure.meta_mp:
+    (PROP ?P ⟹ PROP ?Q) ⟹ PROP ?P ⟹ PROP ?Q
+  Pure.revcut_rl:
+    PROP ?V ⟹ (PROP ?V ⟹ PROP ?W) ⟹ PROP ?W
+</code></pre><p>不过，我们从HOL换成IFOL之后，发现能力比之前大大缩水了。我是特指工具自动化方面。</p><p>首先，by auto不能用了：</p><pre class="hljs"><code>lemma mp2 : &quot;⟦A⟹B;A⟧⟹B&quot;
+  by auto
+</code></pre><p>这个需要imports Main的情况下才能用，现在用不了了。</p><p>当然，在HOL环境条件下，系统推荐的规则也是不同的：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. (A ⟹ B) ⟹ A ⟹ B 
+Auto solve_direct: the current goal can be solved directly with
+  Extraction.exE_realizer:
+    ?P (snd ?p) (fst ?p) ⟹
+    (⋀x y. ?P y x ⟹ ?Q (?f x y)) ⟹
+    ?Q (let (x, y) = ?p in ?f x y)
+  Extraction.exE_realizer':
+    ?P (snd ?p) (fst ?p) ⟹ (⋀x y. ?P y x ⟹ ?Q) ⟹ ?Q
+  Hilbert_Choice.someI2:
+    ?P ?a ⟹ (⋀x. ?P x ⟹ ?Q x) ⟹ ?Q (SOME x. ?P x)
+  Orderings.wellorder_class.LeastI2:
+    ?P ?a ⟹ (⋀x. ?P x ⟹ ?Q x) ⟹ ?Q (Least ?P)
+  Orderings.wellorder_class.LeastI2_wellorder:
+    ?P ?a ⟹
+    (⋀a. ?P a ⟹ ∀b. ?P b ⟶ a ≤ b ⟹ ?Q a) ⟹
+    ?Q (Least ?P)
+</code></pre><p>第二，神兵利器sledgehammer也不能用了：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-65c08357608526ef.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="no_atp.png"></p><p>不过，受限之后对于我们学习基础知识还是很有好处的，这使我们能接触到系统中更基础的逻辑。</p><h3 id="交与并">交与并 <a class="markdownIt-Anchor" href="#交与并">#</a></h3><p>下面我们看一些基础的直觉命题逻辑：</p><p>交规则：</p><pre class="hljs"><code>lemma conj_1 : &quot;P∧Q⟹P&quot;
+  by(erule conjunct1)
+
+lemma conj_2 : &quot;P∧Q⟹Q&quot;
+  by(erule conjunct2)
+</code></pre><p>并规则：</p><pre class="hljs"><code>lemma disj_1: &quot;P ⟹ P ∨ Q&quot;
+  by(erule disjI1)
+
+lemma disj_2: &quot;Q ⟹ P ∨ Q&quot;
+  by(erule disjI2)
+</code></pre><p>并规则还可以更复杂一些：</p><pre class="hljs"><code>lemma disj_E: &quot;⟦P∨Q;P⟹R;Q⟹R⟧⟹R&quot;
+  by(erule IFOL.disjE)
+</code></pre><p>加上包名是用来强调下这是直觉一阶逻辑中的规则。</p><p>在HOL中，同样有等价的规则：</p><pre class="hljs"><code>lemma disj_E: &quot;⟦P∨Q;P⟹R;Q⟹R⟧⟹R&quot;
+  by (erule HOL.disjE)
+</code></pre><p>当然，在HOL中，我们直接by auto就好了：</p><pre class="hljs"><code>lemma disj_E: &quot;⟦P∨Q;P⟹R;Q⟹R⟧⟹R&quot;
+  by auto
+</code></pre><h3 id="量词">量词 <a class="markdownIt-Anchor" href="#量词">#</a></h3><p>全称量词：</p><pre class="hljs"><code>lemma spec_2: &quot;(∀x. P(x)) ⟹ P(x)&quot;
+  by(erule allE)
+</code></pre><p>针对全体元素的这个定理，有4条规则可以使用：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. ∀x. P(x) ⟹ P(x) 
+Auto solve_direct: the current goal can be solved directly with
+  IFOL.allE: ∀x. ?P(x) ⟹ (?P(?x) ⟹ ?R) ⟹ ?R
+  IFOL.allE':
+    ∀x. ?P(x) ⟹ (?P(?x) ⟹ ∀x. ?P(x) ⟹ ?Q) ⟹ ?Q
+  IFOL.all_dupE:
+    ∀x. ?P(x) ⟹ (?P(?x) ⟹ ∀x. ?P(x) ⟹ ?R) ⟹ ?R
+  IFOL.spec: ∀x. ?P(x) ⟹ ?P(?x)
+</code></pre><p>对于这么基础的功能，HOL中也是都有的：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. ∀x. P x ⟹ P x 
+Auto solve_direct: the current goal can be solved directly with
+  HOL.allE: ∀x. ?P x ⟹ (?P ?x ⟹ ?R) ⟹ ?R
+  HOL.allE': ∀x. ?P x ⟹ (?P ?x ⟹ ∀x. ?P x ⟹ ?Q) ⟹ ?Q
+  HOL.all_dupE:
+    ∀x. ?P x ⟹ (?P ?x ⟹ ∀x. ?P x ⟹ ?R) ⟹ ?R
+  HOL.spec: ∀x. ?P x ⟹ ?P ?x
+</code></pre><h3 id="相等">相等 <a class="markdownIt-Anchor" href="#相等">#</a></h3><p>我们可以学习下相等的可交换性的在IFOL中的证明：</p><pre class="hljs"><code>lemma sym_2: &quot;a=b ⟹ b=a&quot;
+  apply(erule subst)
+  apply(rule refl)
+  done
+</code></pre><p>我们也可以通过by的方式简写下：</p><pre class="hljs"><code>lemma sym_3: &quot;a=b ⟹ b=a&quot;
+  by(erule subst, rule refl)
+</code></pre><p>对于传递性，我们使用替换规则，加上假设：</p><pre class="hljs"><code>lemma trans_2: &quot;⟦ a=b; b=c⟧ ⟹ a=c&quot;
+  apply(erule subst, assumption)
+  done
+</code></pre><p>或者简写一下，假设不要了，直接by erule subst:</p><pre class="hljs"><code>lemma trans_3: &quot;⟦ a=b; b=c⟧ ⟹ a=c&quot;
+  by(erule subst)
+</code></pre><p>从系统的推荐来看，关于传递的规则还真不少：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. a = b ⟹ b = c ⟹ a = c 
+Auto solve_direct: the current goal can be solved directly with
+  IFOL.back_subst: ?P(?a) ⟹ ?a = ?b ⟹ ?P(?b)
+  IFOL.basic_trans_rules(1): ?a = ?b ⟹ ?P(?b) ⟹ ?P(?a)
+  IFOL.basic_trans_rules(2): ?P(?a) ⟹ ?a = ?b ⟹ ?P(?b)
+  IFOL.basic_trans_rules(5): ?a = ?b ⟹ ?b = ?c ⟹ ?a = ?c
+  IFOL.forw_subst: ?a = ?b ⟹ ?P(?b) ⟹ ?P(?a)
+</code></pre><p>对于不相等，我们可以借用上面的相等的定理：</p><pre class="hljs"><code>lemma notsym_2: &quot;a≠b ⟹ b ≠a &quot;
+  apply(erule contrapos)
+  apply(erule sym_2)
+  done
+</code></pre><p>对于HOL，直接上个simp，全搞定：</p><pre class="hljs"><code>lemma sym_2: &quot;a=b ⟹ b=a&quot;
+  by simp
+
+lemma notsym_2: &quot;a≠b ⟹ b ≠a &quot;
+  by simp
+</code></pre><h3 id="直觉逻辑">直觉逻辑 <a class="markdownIt-Anchor" href="#直觉逻辑">#</a></h3><p>我们尝试证明<code>lemma A9: &quot;A ∨ ¬A&quot;</code>就会发现，并没有solve_direct的提示。</p><p>同样，两次求反，IFOL中也并没有solve_direct的证明：</p><pre class="hljs"><code>lemma AA: &quot;¬¬A ⟹ A&quot;
+</code></pre><p>而在HOL中，有HOL.notnotD: ¬ ¬ ?P ⟹ ?P是可以直接证明的。</p><h2 id="hol自动推理的几大利器">HOL自动推理的几大利器 <a class="markdownIt-Anchor" href="#hol自动推理的几大利器">#</a></h2><p>经过了IFOL手工的洗礼，再回头看HOL提供的自动工具，是不是有一种从古代穿越回现代的感觉。</p><p>从弱至强，HOL提供了几个级别的工具：</p><ul><li>solve_direct</li><li>auto</li><li>simp加上手动调整</li><li>fastforce</li><li>blast</li><li>try0</li><li>sledgehammer</li><li>try</li></ul><p>solve_direct是我们近期见的最多的，一般都会被自动提示。它是一个关键字，我们可以通过在代码中加入它来显示：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-f5956df340737524.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="solve_direct.png"></p><p>自动化方面，最基础的是auto，主要完成的工作是重写与化简，核心逻辑是simp:</p><pre class="hljs"><code>lemma iffI_2: &quot;⟦P⟹Q;Q⟹P⟧ ⟹ P ⟷ Q&quot; 
+  apply (auto)
+  done
+</code></pre><p>simp比起auto可以更加手动控制一些：</p><pre class="hljs"><code>lemma iffI_2: &quot;⟦P⟹Q;Q⟹P⟧ ⟹ P ⟷ Q&quot; 
+  by(simp)
+</code></pre><p>默认报错：</p><pre class="hljs"><code>theorem iffI_2: (?P ⟹ ?Q) ⟹ (?Q ⟹ ?P) ⟹ ?P = ?Q 
+Failed to apply initial proof method⌂:
+goal (1 subgoal):
+ 1. (P ⟹ Q) ⟹ (Q ⟹ P) ⟹ P = Q
+</code></pre><p>我们可以通过add:来增加规则，或者del:去删除规则。本例中，既然默认找不到，我们就simp add:一下：</p><pre class="hljs"><code>lemma iffI_2: &quot;⟦P⟹Q;Q⟹P⟧ ⟹ P ⟷ Q&quot; 
+  by(simp add:iffI)
+</code></pre><p>这样就顺利通过了。</p><p>比auto更强一些的是fastforce:</p><pre class="hljs"><code>lemma iffI_2: &quot;⟦P⟹Q;Q⟹P⟧ ⟹ P ⟷ Q&quot; 
+  by(fastforce)
+</code></pre><p>fastforce也可以加上simp add:来微调。</p><p>如果逻辑还更复杂，我们继续换更强的blast工具：</p><pre class="hljs"><code>lemma iffI_2: &quot;⟦P⟹Q;Q⟹P⟧ ⟹ P ⟷ Q&quot; 
+  by(blast)
+</code></pre><p>一般我们的一阶逻辑问题靠blast就可以解决了。<br>blast就不支持simp add:了。</p><p>如果blast还不灵，我们可以写一条try0语句来进行搜索：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-afd654f0c5cf9ac4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="try0.png"></p><p>我们会看到搜索的结果：</p><pre class="hljs"><code>Trying &quot;simp&quot;, &quot;auto&quot;, &quot;blast&quot;, &quot;metis&quot;, &quot;argo&quot;, &quot;linarith&quot;, &quot;presburger&quot;, &quot;algebra&quot;, &quot;fast&quot;, &quot;fastforce&quot;, &quot;force&quot;, &quot;meson&quot;, and &quot;satx&quot;... 
+Found proof: by blast (0 ms) 
+Found proof: by argo (0 ms) 
+Found proof: by linarith (1 ms) 
+Found proof: by fast (0 ms) 
+Found proof: by metis (2 ms) 
+Found proof: by fastforce (0 ms) 
+Found proof: by satx (0 ms) 
+Found proof: by auto (4 ms) 
+Found proof: by meson (1 ms) 
+Found proof: by force (3 ms) 
+Try this: by blast
+(blast, argo, fast, fastforce, satx: 0 ms; linarith, meson: 1 ms; metis: 2 ms; force: 3 ms; auto: 4 ms)
+</code></pre><p>根据搜到的结果抄一个吧，比如这个:</p><pre class="hljs"><code>lemma iffI_2: &quot;⟦P⟹Q;Q⟹P⟧ ⟹ P ⟷ Q&quot; 
+  by(argo)
+</code></pre><p>从搜索结果也看到，只用simp是不行的。</p><p>最后的解决方案是try:</p><pre class="hljs"><code>Trying &quot;solve_direct&quot;, &quot;quickcheck&quot;, &quot;try0&quot;, &quot;sledgehammer&quot;, and &quot;nitpick&quot;... 
+Try0 found a proof: by blast (0 ms)
+</code></pre><p>try不仁，以try0和sledgehammer等为刍狗。</p><h2 id="参考文献">参考文献 <a class="markdownIt-Anchor" href="#参考文献">#</a></h2><ol><li>计算机科学中的现代逻辑学，王元元编著，北京：科学出版社，2001</li><li>结构证明论，马明辉编著，北京：科学出版社，2019</li></ol></div><div dir="ltr" class="level article-bar is-mobile"><div class="level-item has-text-centered"><a title="previous page" class="previouse-article-link" href="../操作系统形式化验证/fv1.html"><span class="icon icon-previous" data-icon="previous"></span><span class="link-content">&laquo; Previous</span></a></div><div class="level-item has-text-centered"><a title="font size" class="link-item link-item-size"><span class="icon icon-size" data-icon="size"></span></a></div><div class="level-item has-text-centered"><a title="table of content" class="link-item link-item-toc"><span class="icon icon-toc" data-icon="toc"></span></a></div><div class="level-item has-text-centered"><a title="top" href="#"><span class="icon icon-up" data-icon="up"></span> <span class="link-content">⤊ Top</span></a></div><div class="level-item has-text-centered"><a title="next page" class="next-article-link" href="../操作系统形式化验证/fv11.html"><span class="icon icon-next" data-icon="next"></span><span class="link-content">Next &raquo;</span></a></div></div></div><div class="column is-2-widescreen is-hidden"></div></div><div class="columns foot"><div class="column is-3 is-offset-9 build-by">Build by <a href="https://github.com/ruanyf/loppo" target="_blank">Loppo</a> 0.6.20</div></div><div class="book-toc notification is-warning is-hidden"><h3>Table of chapters &nbsp;<span class="title-close"><a class="button is-danger"> Close</a></span></h3><ul class="chapter-area"><li class="chapter-item"><a href="../操作系统形式化验证/index.html">操作系统形式化验证</a>&nbsp;<a class="first-level-collapse"><span class="icon icon-collapse" data-icon="collapse"></span></a></li><ul class="chapter-level-1 chapter-level-1-current"><li class="chapter-item"><a href="../操作系统形式化验证/fv1.html">操作系统形式化验证实践教程(1) - 证明第一个定理</a></li><li class="chapter-item chapter-item-current"><a href="../操作系统形式化验证/fv10.html">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv11.html">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv12.html">操作系统形式化验证实践教程(12) - 经典命题逻辑与公式查错方法</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv13.html">操作系统形式化验证实践教程(13) - 符号的输入方法</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv2.html">操作系统形式化验证实践教程(2) - HOL列表与集合</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv3.html">操作系统形式化验证实践教程(3) - 自动证明工具</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv4.html">操作系统形式化验证实践教程(4) - 工具环境</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv5.html">操作系统形式化验证实践教程(5) - 搭建seL4环境</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv6.html">操作系统形式化验证实践教程(6) - 解析C源代码</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv7.html">操作系统形式化验证实践教程(7) - C代码的自动验证</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv8.html">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv9.html">操作系统形式化验证实践教程(9) - 规范与证明概述</a></li></ul><li class="chapter-item"><a href="../符号执行/index.html">符号执行</a>&nbsp;<a class="first-level-collapse"><span class="icon icon-expand" data-icon="expand"></span></a></li><ul class="chapter-level-1"><li class="chapter-item"><a href="../符号执行/ se1.html">符号执行(1) - 自动生成覆盖率用例之利器</a></li></ul></ul></div><div class="progress-indicator"></div><!-- SCRIPTS --><script>var LOPPO={current_path:"操作系统形式化验证/fv10.md",relative_root_path:"../",article_toc:'<ul class="markdownIt-TOC">\n<li><a href="#%E7%9B%B4%E8%A7%89%E4%B8%BB%E4%B9%89%E9%80%BB%E8%BE%91">直觉主义逻辑</a></li>\n<li><a href="#%E7%9B%B4%E8%A7%89%E4%B8%80%E9%98%B6%E9%80%BB%E8%BE%91%E7%BC%96%E7%A8%8B">直觉一阶逻辑编程</a>\n<ul>\n<li><a href="#%E4%BA%A4%E4%B8%8E%E5%B9%B6">交与并</a></li>\n<li><a href="#%E9%87%8F%E8%AF%8D">量词</a></li>\n<li><a href="#%E7%9B%B8%E7%AD%89">相等</a></li>\n<li><a href="#%E7%9B%B4%E8%A7%89%E9%80%BB%E8%BE%91">直觉逻辑</a></li>\n</ul>\n</li>\n<li><a href="#hol%E8%87%AA%E5%8A%A8%E6%8E%A8%E7%90%86%E7%9A%84%E5%87%A0%E5%A4%A7%E5%88%A9%E5%99%A8">HOL自动推理的几大利器</a></li>\n<li><a href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE">参考文献</a></li>\n</ul>\n'}</script><script src="../assets/js/app.js"></script></body></html>

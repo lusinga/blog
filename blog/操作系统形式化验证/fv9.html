@@ -1,0 +1,127 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta charset="utf-8"><title>操作系统形式化验证实践教程(9) - 规范与证明概述 - 哲学系炼金术士</title><meta name="description" content=""><meta name="author" content=""><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1"><link rel="stylesheet" href="../assets/css/bulma.min.css"><link rel="stylesheet" href="../assets/css/app.css"><!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]--><link rel="shortcut icon" href=""></head><body dir="ltr"><nav class="columns navbar"><div class="column logo is-3 is-offset-1"><a class="is-brand" href="../index.html">哲学系炼金术士</a></div></nav><div class="columns content"><div class="column is-2-desktop is-3-widescreen is-hidden-touch"></div><div class="column article-container is-11-tablet is-8-desktop is-6-widescreen"><div class="breadcrumb-area"><a href="../index.html" class="breadcrumb-item">Home</a><span class="breadcrumb-delimiter"> &gt; </span><a href="../操作系统形式化验证/index.html" class="breadcrumb-item">操作系统形式化验证</a><span class="breadcrumb-delimiter"> &gt; </span><a href="../操作系统形式化验证/fv9.html" class="breadcrumb-item">操作系统形式化验证实践教程(9) - 规范与证明概述</a></div><h1 class="article-title">操作系统形式化验证实践教程(9) - 规范与证明概述</h1><div class="article"><h2 id="规范与证明的主线">规范与证明的主线 <a class="markdownIt-Anchor" href="#规范与证明的主线">#</a></h2><p>前面铺垫了这么多，下面我们看一下seL4形式化验证的大图：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-3175418c889795dd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="seL4证明.png"></p><p>seL4的证明部分主要分为两大部分：规范部分，对应spec目录；证明部分，对应proof目录。</p><p>规范分为4种：</p><ul><li>设计规范：就是从上节所见的haskell代码转换成的，可以运行的对操作系统的建模规范，对应目标ExecSpec</li><li>抽象规范：是基于硬件规范和设计规范的抽象，对应目标ASpec</li><li>capDL规范：capDL是用于运行时建模的语言，用于系统初始化等动态过程的建模，对应目标DSpec</li><li>C规范：其实是用工具对C代码的解析，就没有列到图上。要不然反汇编的最终代码也得算一个吧。对应目标CSpec</li></ul><p>证明上，抽象规范是核心。<br>首先有抽象规范的不变量验证，然后是refine，抽象规范是否正确被设计规范实现的证明<br>其次是CRefine，证明C代码的实现与设计规范相符<br>第三是DRefine，证明运行时建模与抽象规范相符<br>最后是AsmRefine，证明C语言生成的代码与反汇编出来的相符</p><p>除此之外，还有安全相关的一些细节。</p><p>我们引用seL4官方论文的图来看一下：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-7848373916e2678a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="seL4"></p><h2 id="规范及其依赖关系">规范及其依赖关系 <a class="markdownIt-Anchor" href="#规范及其依赖关系">#</a></h2><p>我们再看一张seL4的设计过程图：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-daa15664d05bad80.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="seL4 Design"></p><p>在spec目录，执行make ExecSpec，就可以生成设计规范。ExecSpec也是另外几个规范的基础，它们都要引用到ExecSpec，要不然不知道硬件接口等基础信息，上面的高层建筑也就不用玩了。</p><p>我们来看ExecSpec的依赖关系，它并不依赖于其它Spec:</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+</code></pre><p>抽象规范ASpec依赖于ExecSpec:</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session Specifications/ASpec
+</code></pre><p>CapDL规范，也就是DSpec，依赖于ExecSpec和ASpec:</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session Specifications/ASpec
+Session Specifications/DSpec
+</code></pre><p>CapDL用于系统初始化的过程如下图所示：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-328f06ee232c7732.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="CapDL.png"></p><p>C规范是最复杂的，不但依赖ExecSpec，C-Parser工具，还有AsmRefine工具，还有针对C语言本身的CKernel：</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session C-Parser/Simpl-VCG
+Session C-Parser/CParser
+Session Lib/CLib (lib)
+Session Tools/AsmRefine
+Session Specifications/CKernel
+Session Specifications/CSpec
+</code></pre><h2 id="证明及其依赖">证明及其依赖 <a class="markdownIt-Anchor" href="#证明及其依赖">#</a></h2><p>前面介绍了，Refine过程是检查设计规范与抽象规范的一致性，所以会依赖ExecSpec和ASpec。在proof目录下运行make Refine:</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session Specifications/ASpec
+Session Proofs/AInvs
+Session Lib/CorresK
+Session Proofs/BaseRefine
+Session Proofs/Refine
+</code></pre><p>CRefine的过程，依赖上面的Refine过程：</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session Specifications/ASpec
+Session Proofs/AInvs
+Session Lib/CorresK
+Session Proofs/BaseRefine
+Session Proofs/Refine
+Session C-Parser/Simpl-VCG
+Session C-Parser/CParser
+Session Lib/CLib (lib)
+Session Tools/AsmRefine
+Session Unsorted/AutoCorres
+Session Specifications/CKernel
+Session Specifications/CSpec
+Session Proofs/CBaseRefine
+Session Proofs/CRefine
+</code></pre><p>终极目标是校验最终生成的目标代码<code>make SimplExportAndRefine</code>：</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+Session Specifications/ExecSpec
+Session C-Parser/Simpl-VCG
+Session C-Parser/CParser
+Session Lib/CLib (lib)
+Session Tools/AsmRefine
+Session Specifications/CKernel
+Session Specifications/CSpec
+Session Proofs/SimplExport
+Session Proofs/SimplExportAndRefine
+</code></pre><p>有同学觉得，能校验C代码和反汇编的代码是不是一致这太神奇了。这其中使用了一个将两者都转换成图结构，然后进行比较的工具：<a href="https://github.com/seL4/graph-refine" target="_blank" rel="noopener">https://github.com/seL4/graph-refine</a>。</p><p>详细原理我们还是看下官方的图：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-a851a95ce94edd6c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="AsmRefine"></p><p>如果图还抽象的话我们看个例子：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-3f345cfe1312d817.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="Example"></p><p>左边是C代码，右边是反汇编的结果，中间是它们用图表示的结构。</p></div><div dir="ltr" class="level article-bar is-mobile"><div class="level-item has-text-centered"><a title="previous page" class="previouse-article-link" href="../操作系统形式化验证/fv8.html"><span class="icon icon-previous" data-icon="previous"></span><span class="link-content">&laquo; Previous</span></a></div><div class="level-item has-text-centered"><a title="font size" class="link-item link-item-size"><span class="icon icon-size" data-icon="size"></span></a></div><div class="level-item has-text-centered"><a title="table of content" class="link-item link-item-toc"><span class="icon icon-toc" data-icon="toc"></span></a></div><div class="level-item has-text-centered"><a title="top" href="#"><span class="icon icon-up" data-icon="up"></span> <span class="link-content">⤊ Top</span></a></div><div class="level-item has-text-centered"><a title="next page" class="next-article-link" href="../符号执行/index.html"><span class="icon icon-next" data-icon="next"></span><span class="link-content">Next &raquo;</span></a></div></div></div><div class="column is-2-widescreen is-hidden"></div></div><div class="columns foot"><div class="column is-3 is-offset-9 build-by">Build by <a href="https://github.com/ruanyf/loppo" target="_blank">Loppo</a> 0.6.20</div></div><div class="book-toc notification is-warning is-hidden"><h3>Table of chapters &nbsp;<span class="title-close"><a class="button is-danger"> Close</a></span></h3><ul class="chapter-area"><li class="chapter-item"><a href="../操作系统形式化验证/index.html">操作系统形式化验证</a>&nbsp;<a class="first-level-collapse"><span class="icon icon-collapse" data-icon="collapse"></span></a></li><ul class="chapter-level-1 chapter-level-1-current"><li class="chapter-item"><a href="../操作系统形式化验证/fv1.html">操作系统形式化验证实践教程(1) - 证明第一个定理</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv10.html">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv11.html">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv12.html">操作系统形式化验证实践教程(12) - 经典命题逻辑与公式查错方法</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv13.html">操作系统形式化验证实践教程(13) - 符号的输入方法</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv2.html">操作系统形式化验证实践教程(2) - HOL列表与集合</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv3.html">操作系统形式化验证实践教程(3) - 自动证明工具</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv4.html">操作系统形式化验证实践教程(4) - 工具环境</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv5.html">操作系统形式化验证实践教程(5) - 搭建seL4环境</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv6.html">操作系统形式化验证实践教程(6) - 解析C源代码</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv7.html">操作系统形式化验证实践教程(7) - C代码的自动验证</a></li><li class="chapter-item"><a href="../操作系统形式化验证/fv8.html">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</a></li><li class="chapter-item chapter-item-current"><a href="../操作系统形式化验证/fv9.html">操作系统形式化验证实践教程(9) - 规范与证明概述</a></li></ul><li class="chapter-item"><a href="../符号执行/index.html">符号执行</a>&nbsp;<a class="first-level-collapse"><span class="icon icon-expand" data-icon="expand"></span></a></li><ul class="chapter-level-1"><li class="chapter-item"><a href="../符号执行/ se1.html">符号执行(1) - 自动生成覆盖率用例之利器</a></li></ul></ul></div><div class="progress-indicator"></div><!-- SCRIPTS --><script>var LOPPO={current_path:"操作系统形式化验证/fv9.md",relative_root_path:"../",article_toc:'<ul class="markdownIt-TOC">\n<li><a href="#%E8%A7%84%E8%8C%83%E4%B8%8E%E8%AF%81%E6%98%8E%E7%9A%84%E4%B8%BB%E7%BA%BF">规范与证明的主线</a></li>\n<li><a href="#%E8%A7%84%E8%8C%83%E5%8F%8A%E5%85%B6%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB">规范及其依赖关系</a></li>\n<li><a href="#%E8%AF%81%E6%98%8E%E5%8F%8A%E5%85%B6%E4%BE%9D%E8%B5%96">证明及其依赖</a></li>\n</ul>\n'}</script><script src="../assets/js/app.js"></script></body></html>
