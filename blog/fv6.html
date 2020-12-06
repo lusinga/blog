@@ -1,0 +1,900 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta charset="utf-8"><title>操作系统形式化验证实践教程(6) - 解析C源代码 - 哲学系炼金术指南</title><meta name="description" content=""><meta name="author" content=""><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1"><link rel="stylesheet" href="assets/css/bulma.min.css"><link rel="stylesheet" href="assets/css/app.css"><!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]--><link rel="shortcut icon" href=""></head><body dir="ltr"><nav class="columns navbar"><div class="column logo is-3 is-offset-1"><a class="is-brand" href="index.html">哲学系炼金术指南</a></div></nav><div class="columns content"><div class="column is-2-desktop is-3-widescreen is-hidden-touch"></div><div class="column article-container is-11-tablet is-8-desktop is-6-widescreen"><div class="breadcrumb-area"><a href="index.html" class="breadcrumb-item">Home</a><span class="breadcrumb-delimiter"> &gt; </span><a href="fv6.html" class="breadcrumb-item">操作系统形式化验证实践教程(6) - 解析C源代码</a></div><h1 class="article-title">操作系统形式化验证实践教程(6) - 解析C源代码</h1><div class="article"><p>从这一讲我们跨出了Isabelle/HOL的领域，开始进入操作系统的领域。<br>目前的操作系统主要是由C语言和汇编语言写成的，所以我们的第一步先从解析C语言代码开始。</p><h2 id="构造c解析器">构造C解析器 <a class="markdownIt-Anchor" href="#构造c解析器">#</a></h2><p>我们需要一个能够解析C源代码，并且能在HOL操作C源代码的工具。seL4为我们提供了c-parser.</p><p>我们首先进入l4v/tools/c-parser目录，接着构造c-parser-deps:</p><pre class="hljs"><code>make c-parser-deps
+</code></pre><p>依赖构建好之后，我们就构建c-parser，并且运行相关的回归测试。直接输入make命令就好。</p><p>实际执行的命令是isabelle build：</p><pre class="hljs"><code>isabelle/bin/isabelle build -d ../.. -b -v CParser
+</code></pre><p>构建过程如下，首先是我们上一讲构造Word-Lib时已经见过的基础库：</p><pre class="hljs"><code>Session Pure/Pure
+Session FOL/FOL
+Session Tools/Tools
+Session HOL/HOL (main)
+Session HOL/HOL-Library (main timing)
+Session HOL/HOL-Computational_Algebra (main timing)
+Session HOL/HOL-Analysis (main timing)
+Session HOL/HOL-Eisbach
+Session HOL/HOL-Statespace
+Session HOL/HOL-Word (main timing)
+Session Lib/Word_Lib (lib)
+Session Lib/Lib (lib)
+</code></pre><p>然后是C-Parser部分，主要分为两部分: Simpl-VCG和CParser本身。我们先看Simpl-VCG部分：</p><pre class="hljs"><code>Session C-Parser/Simpl-VCG
+Session C-Parser/CParser
+Building Simpl-VCG ...
+Simpl-VCG: theory HOL-Library.Old_Recdef
+Simpl-VCG: theory HOL-Statespace.DistinctTreeProver
+Simpl-VCG: theory Simpl-VCG.Language
+Simpl-VCG: theory HOL-Statespace.StateFun
+Simpl-VCG: theory Simpl-VCG.Generalise
+Simpl-VCG: theory HOL-Statespace.StateSpaceLocale
+Simpl-VCG: theory Simpl-VCG.Semantic
+Simpl-VCG: theory Simpl-VCG.HoarePartialDef
+Simpl-VCG: theory Simpl-VCG.Termination
+Simpl-VCG: theory Simpl-VCG.HoarePartialProps
+Simpl-VCG: theory Simpl-VCG.HoareTotalDef
+Simpl-VCG: theory Simpl-VCG.SmallStep
+Simpl-VCG: theory Simpl-VCG.HoarePartial
+Simpl-VCG: theory Simpl-VCG.HoareTotalProps
+Simpl-VCG: theory Simpl-VCG.HoareTotal
+Simpl-VCG: theory Simpl-VCG.Hoare
+Simpl-VCG: theory Simpl-VCG.StateSpace
+Simpl-VCG: theory Simpl-VCG.Vcg
+Timing Simpl-VCG (6 threads, 23.240s elapsed time, 72.501s cpu time, 4.949s GC time, factor 3.12)
+Finished Simpl-VCG (0:00:35 elapsed time, 0:01:36 cpu time, factor 2.74)
+</code></pre><p>simpl-vcg在C语言的解析证明中，将会被反复用到。<br>simpl是Sequential Imperative programming language的缩写，是我们推理证明时对编程语言的一种抽象表示形式。<br>而VCG是Verification condition generator，用于自动生成验证条件。</p><p>最后则是CParser本身：</p><pre class="hljs"><code>Building CParser ...
+CParser: theory CParser.MapExtra
+CParser: theory CParser.PrettyProgs
+CParser: theory CParser.Arrays
+CParser: theory CParser.StaticFun
+CParser: theory CParser.Padding
+CParser: theory CParser.Addr_Type
+CParser: theory CParser.IndirectCalls
+CParser: theory Lib.MLUtils
+CParser: theory CParser.CTypesBase
+CParser: theory CParser.MapExtraTrans
+CParser: theory CParser.CTypesDefs
+CParser: theory CParser.CTypes
+CParser: theory CParser.HeapRawState
+CParser: theory CParser.Vanilla32_Preliminaries
+CParser: theory CParser.Word_Mem_Encoding
+CParser: theory CParser.Vanilla32
+CParser: theory CParser.CompoundCTypes
+CParser: theory CParser.ArraysMemInstance
+CParser: theory CParser.ArchArraysMemInstance
+CParser: theory CParser.TypHeap
+CParser: theory CParser.Separation
+CParser: theory CParser.SepCode
+CParser: theory CParser.SepInv
+CParser: theory CParser.SepTactic
+CParser: theory CParser.SepFrame
+CParser: theory CParser.StructSupport
+CParser: theory CParser.ArrayAssertion
+CParser: theory CParser.CProof
+CParser: theory CParser.CLanguage
+CParser: theory CParser.ModifiesProofs
+CParser: theory CParser.PackedTypes
+CParser: theory CParser.CTranslation
+Timing CParser (6 threads, 79.482s elapsed time, 190.601s cpu time, 12.588s GC time, factor 2.40)
+Finished CParser (0:01:35 elapsed time, 0:03:42 cpu time, factor 2.34)
+</code></pre><p>最后，会运行一些回归测试。这些测试项目也是我们学习如何验证C程序的好例子，因为毕竟更上一个层次有更上一个层次的关注点:</p><pre class="hljs"><code>Session Unsorted/CParserTest
+Running CParserTest ...
+CParserTest: theory CParserTest.MachineWords
+CParserTest: theory CParserTest.analsignedoverflow
+CParserTest: theory CParserTest.asm_stmt
+CParserTest: theory CParserTest.attributes
+CParserTest: theory CParserTest.array_of_ptr
+CParserTest: theory CParserTest.arrays
+CParserTest: theory CParserTest.basic_char
+CParserTest: theory CParserTest.bigstruct
+CParserTest: theory CParserTest.breakcontinue
+CParserTest: theory CParserTest.bug20060707
+CParserTest: theory CParserTest.bug_mvt20110302
+CParserTest: theory CParserTest.bugzilla180
+CParserTest: theory CParserTest.bugzilla181
+CParserTest: theory CParserTest.bugzilla182
+CParserTest: theory CParserTest.builtins
+CParserTest: theory CParserTest.charlit
+CParserTest: theory CParserTest.codetests
+CParserTest: theory CParserTest.dc_20081211
+CParserTest: theory CParserTest.dc_embbug
+CParserTest: theory CParserTest.decl_only
+CParserTest: theory CParserTest.dont_translate
+CParserTest: theory CParserTest.dupthms
+CParserTest: theory CParserTest.emptystmt
+CParserTest: theory CParserTest.extern_builtin
+CParserTest: theory CParserTest.extern_dups
+CParserTest: theory CParserTest.factorial
+CParserTest: theory CParserTest.fncall
+CParserTest: theory CParserTest.fnptr
+CParserTest: theory CParserTest.gcc_attribs
+CParserTest: theory CParserTest.ghoststate1
+CParserTest: theory CParserTest.ghoststate2
+CParserTest: theory CParserTest.globals_fn
+CParserTest: theory CParserTest.globals_in_record
+CParserTest: theory CParserTest.globinits
+CParserTest: theory CParserTest.guard_while
+CParserTest: theory CParserTest.hexliteral
+CParserTest: theory CParserTest.initialised_decls
+CParserTest: theory CParserTest.inner_fncalls
+CParserTest: theory CParserTest.int_promotion
+CParserTest: theory CParserTest.isa2014
+CParserTest: theory CParserTest.jiraver039
+CParserTest: theory CParserTest.jiraver092
+CParserTest: theory CParserTest.jiraver105
+CParserTest: theory CParserTest.jiraver110
+CParserTest: theory CParserTest.jiraver1241
+CParserTest: theory CParserTest.jiraver150
+CParserTest: theory CParserTest.jiraver224
+CParserTest: theory CParserTest.jiraver253
+CParserTest: theory CParserTest.jiraver254
+CParserTest: theory CParserTest.jiraver307
+CParserTest: theory CParserTest.jiraver310
+CParserTest: theory CParserTest.jiraver313
+CParserTest: theory CParserTest.jiraver315
+CParserTest: theory CParserTest.jiraver332
+CParserTest: theory CParserTest.jiraver336
+CParserTest: theory CParserTest.jiraver337
+CParserTest: theory CParserTest.jiraver344
+CParserTest: theory CParserTest.jiraver345
+CParserTest: theory CParserTest.jiraver384
+CParserTest: theory CParserTest.jiraver400
+CParserTest: theory CParserTest.jiraver422
+CParserTest: theory CParserTest.jiraver426
+CParserTest: theory CParserTest.jiraver429
+CParserTest: theory CParserTest.jiraver432
+CParserTest: theory CParserTest.jiraver434
+CParserTest: theory CParserTest.jiraver439
+CParserTest: theory CParserTest.jiraver440
+CParserTest: theory CParserTest.jiraver443
+CParserTest: theory CParserTest.jiraver443a
+CParserTest: theory CParserTest.jiraver456
+CParserTest: theory CParserTest.jiraver464
+CParserTest: theory CParserTest.jiraver473
+CParserTest: theory CParserTest.jiraver54
+CParserTest: theory CParserTest.jiraver550
+CParserTest: theory CParserTest.jiraver808
+CParserTest: theory CParserTest.jiraver881
+CParserTest: theory CParserTest.kmalloc
+CParserTest: theory CParserTest.list_reverse
+CParserTest: theory CParserTest.list_reverse_norm
+CParserTest: theory CParserTest.locvarfncall
+CParserTest: theory CParserTest.longlong
+CParserTest: theory CParserTest.many_local_vars
+CParserTest: theory CParserTest.modifies_assumptions
+CParserTest: theory CParserTest.modifies_speed
+CParserTest: theory CParserTest.multi_deref
+CParserTest: theory CParserTest.multidim_arrays
+CParserTest: theory CParserTest.mutrec_modifies
+CParserTest: theory CParserTest.parse_addr
+CParserTest: theory CParserTest.parse_c99block
+CParserTest: theory CParserTest.parse_complit
+CParserTest: theory CParserTest.parse_dowhile
+CParserTest: theory CParserTest.parse_enum
+CParserTest: theory CParserTest.parse_fncall
+CParserTest: theory CParserTest.parse_forloop
+CParserTest: theory CParserTest.parse_include
+CParserTest: theory CParserTest.parse_protos
+CParserTest: theory CParserTest.parse_retfncall
+CParserTest: theory CParserTest.parse_sizeof
+CParserTest: theory CParserTest.parse_someops
+CParserTest: theory CParserTest.parse_struct
+CParserTest: theory CParserTest.parse_struct_array
+CParserTest: theory CParserTest.parse_switch
+CParserTest: theory CParserTest.parse_typecast
+CParserTest: theory CParserTest.parse_voidfn
+CParserTest: theory CParserTest.phantom_mstate
+CParserTest: theory CParserTest.populate_globals
+CParserTest: theory CParserTest.postfixOps
+CParserTest: theory CParserTest.protoparamshadow
+CParserTest: theory CParserTest.ptr_auxupd
+CParserTest: theory CParserTest.ptr_diff
+CParserTest: theory CParserTest.really_simple
+CParserTest: theory CParserTest.relspec
+CParserTest: theory CParserTest.retprefix
+CParserTest: theory CParserTest.selection_sort
+CParserTest: theory CParserTest.shortcircuit
+CParserTest: theory CParserTest.signed_div
+CParserTest: theory CParserTest.signedoverflow
+CParserTest: theory CParserTest.simple_annotated_fn
+CParserTest: theory CParserTest.simple_constexpr_sizeof
+CParserTest: theory CParserTest.simple_fn
+CParserTest: theory CParserTest.sizeof_typedef
+CParserTest: theory CParserTest.spec_annotated_fn
+CParserTest: theory CParserTest.spec_annotated_voidfn
+CParserTest: theory CParserTest.swap
+CParserTest: theory CParserTest.switch_unsigned_signed
+CParserTest: theory CParserTest.test_shifts
+CParserTest: theory CParserTest.ummbug20100217
+CParserTest: theory CParserTest.untouched_globals
+CParserTest: theory CParserTest.variable_munge
+CParserTest: theory CParserTest.varinit
+CParserTest: theory CParserTest.void_ptr_init
+CParserTest: theory CParserTest.volatile_asm
+CParserTest: theory CParserTest.ptr_modifies
+Timing CParserTest (6 threads, 497.276s elapsed time, 2153.041s cpu time, 948.943s GC time, factor 4.33)
+Finished CParserTest (0:08:19 elapsed time, 0:36:01 cpu time, factor 4.33)
+
+Finished at Fri Aug 7 20:14:24 GMT+8 2020
+0:08:25 elapsed time, 0:36:01 cpu time, factor 4.28
+
+</code></pre><h2 id="vcg的感性认识">vcg的感性认识 <a class="markdownIt-Anchor" href="#vcg的感性认识">#</a></h2><p>我们首先对vcg来个感性认识。<br>比如我们要验证下面的C函数：</p><pre class="hljs"><code><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">h</span><span class="hljs-params">(<span class="hljs-keyword">int</span> e)</span>
+</span>{
+  <span class="hljs-keyword">while</span> (e &lt; <span class="hljs-number">10</span>)
+    <span class="hljs-comment">/** INV: &quot;\&lt;lbrace&gt; True \&lt;rbrace&gt;&quot; */</span>
+  {
+    <span class="hljs-keyword">if</span> (e &lt; <span class="hljs-number">-10</span>) { <span class="hljs-keyword">continue</span>; }
+    <span class="hljs-keyword">if</span> (e &lt; <span class="hljs-number">0</span>) { <span class="hljs-keyword">break</span>; }
+    e = e - <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> e;
+}
+</code></pre><p>写出来的验证函数如下：</p><pre class="hljs"><code>lemma h:
+  &quot;Γ ⊢ ⦃ -10 &lt;=s ´e &amp; ´e &lt;s 0 ⦄
+  ´ret__int :== PROC h(´e)
+  ⦃ ´ret__int = ´e ⦄&quot;
+apply (hoare_rule HoarePartial.ProcNoRec1)
+apply (hoare_rule HoarePartial.Catch [where R = &quot;⦃ ´ret__int = ´e ⦄&quot;])
+  defer
+  apply vcg
+apply (hoare_rule HoarePartial.conseq
+           [where P' = &quot;λe. ⦃ ´e = e &amp; e &lt;s 0 &amp; -10 &lt;=s e ⦄&quot;
+            and Q' = &quot;λe. ⦃ ´e = e &amp; ´ret__int = e ⦄&quot;
+            and A' = &quot;λe. ⦃ ´e = e &amp; ´ret__int = e ⦄&quot;])
+  defer
+  apply (simp add: subset_iff)
+apply clarsimp
+apply (rule_tac R=&quot;{}&quot; in HoarePartial.Seq)
+  defer
+  apply vcg
+apply (rule_tac R=&quot;⦃ ´e = Z ⦄&quot; in HoarePartial.Seq)
+  defer
+  apply vcg
+apply (rule_tac R = &quot;⦃ ´e = Z &amp; ´global_exn_var = Break ⦄&quot; in HoarePartial.Catch)
+  defer
+  apply vcg
+  apply simp
+apply (rule_tac P' = &quot;⦃ ´e = Z &amp; Z &lt;s 0 &amp; -10 &lt;=s Z ⦄&quot;
+            and Q' = &quot;⦃ ´e = Z &amp; Z &lt;s 0 &amp; -10 &lt;=s Z ⦄ ∩ - ⦃ ´e &lt;s 10 ⦄&quot;
+            and A' = &quot;⦃ ´e = Z &amp; ´global_exn_var = Break ⦄&quot;
+         in HoarePartial.conseq_no_aux)
+  defer
+  apply simp
+apply (simp add: whileAnno_def)
+apply (rule HoarePartialDef.While)
+apply vcg
+apply (simp add: subset_iff)
+done
+</code></pre><p>我们看到基本上推理都是apply vcg.<br>如果vcg自动推导失败，刚不得不写出更多的人工推理。<br>就可能变成这样的推导式：</p><pre class="hljs"><code>lemma dotest:
+  &quot;Γ ⊢ ⦃ ´x = 4 ⦄ ´ret__int :== PROC dotest(´x)
+       ⦃ ´ret__int = 4 ⦄&quot;
+apply (hoare_rule HoarePartial.ProcNoRec1)
+apply (hoare_rule HoarePartial.Catch [where R=&quot;⦃ ´ret__int = 4 ⦄&quot;])
+  apply (hoare_rule HoarePartial.Seq [where R=&quot;{}&quot;])
+    apply (hoare_rule HoarePartial.Seq [where R=&quot;⦃ ´x = 4 ⦄&quot;])
+      apply (hoare_rule HoarePartial.Catch [where R=&quot;⦃ ´x = 4 &amp; ´global_exn_var = Break ⦄&quot;])
+        apply (hoare_rule HoarePartial.Seq [where R=&quot;⦃ False ⦄&quot;])
+          apply (vcg, simp)
+        apply (hoare_rule HoarePartial.conseq_exploit_pre, simp)
+      apply (vcg, simp)
+    apply vcg
+  apply vcg
+apply vcg
+done
+</code></pre><h2 id="受限c语言子集与语法分析工具">受限C语言子集与语法分析工具 <a class="markdownIt-Anchor" href="#受限c语言子集与语法分析工具">#</a></h2><p>seL4的验证只支持C语言的一个受限子集。所幸的是，限制并不太多：</p><ul><li>不能使用goto语句</li><li>switch语句中每个case结束时不能fall-through进入下个case，一定要有break, continue哪怕是return都行</li><li>不能使用union</li><li>结构体、枚举、typedef必须是全局的</li></ul><p>可以使用c-parser工个来检查是否有违反规范的部分。<br>c-parser位于l4v/tools/c-parser/standalone-parser目录下，命令格式为：</p><pre class="hljs"><code>c-parser 架构 c源代码
+</code></pre><p>例：</p><pre class="hljs"><code>l4v/tools/c-parser/standalone-parser/c-parser ARM asm_stmt.c
+</code></pre><h2 id="在hol中读取c代码">在HOL中读取C代码 <a class="markdownIt-Anchor" href="#在hol中读取c代码">#</a></h2><p>有了CParser之后，我们就可以在HOL中引入CParser.CTranslation来将C源代码解析成可以在HOL中处理的结构：</p><pre class="hljs"><code>imports &quot;CParser.CTranslation&quot;
+</code></pre><p>引入了工具类之后，我们就可以将C源代码引入进来了：</p><pre class="hljs"><code>external_file &quot;breakcontinue.c&quot;
+</code></pre><p>下一步我们就可以用install_C_file来将这个c文件进行转换</p><pre class="hljs"><code>install_C_file &quot;breakcontinue.c&quot;
+</code></pre><p>具体的过程类似于下面这样：</p><pre class="hljs"><code>Created locale for globals (&quot;breakcontinue_global_addresses&quot;)- with 1 globals elements 
+-- Fixes: symbol_table
+ 
+1597124608: There are 0 globals: 
+ 
+1597124608: There are 0 addressed variables: 
+ 
+Defining record: myvars =
+  global_exn_var :: c_exntype
+  ret__int :: 32 signed word
+  ret__int :: 32 signed word
+  ret__int :: 32 signed word
+  ret__int :: 32 signed word
+  ret__int :: 32 signed word
+  y___int :: 32 signed word
+  x___int :: 32 signed word
+  x___int :: 32 signed word
+  e___int :: 32 signed word
+  d___int :: 32 signed word
+  c___int :: 32 signed word 
+1597124611: Ignoring initialisations of modified globals (if any)
+ 
+1597124611: Beginning function translation for all functions
+ 
+1597124611: Translating function dotest
+ 
+1597124611: Translating function i
+ 
+1597124611: Translating function h
+ 
+1597124611: Translating function g
+ 
+1597124611: Translating function f
+ 
+1597124611: Translated all functions
+ 
+1597124611: Adding body_def for dotest_body
+ 
+1597124611: Adding body_def for i_body
+ 
+1597124611: Adding body_def for h_body
+ 
+1597124611: Adding body_def for g_body
+ 
+1597124611: Adding body_def for f_body
+ 
+1597124611: Proving automatically calculated modifies proofs
+ 
+1597124611: Globals_all_addressed mode = false
+ 
+1597124611: Beginning modifies proof for singleton f
+ 
+1597124611: Beginning modifies proof for singleton g
+ 
+1597124611: Beginning modifies proof for singleton h
+ 
+1597124611: Beginning modifies proof for singleton i
+ 
+1597124611: Beginning modifies proof for singleton dotest
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.04
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies:g:0.14s:completed
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies:f:0.14s:completed
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.03
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.01
+ 
+1597124611: modifies:h:0.16s:completed
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies vcg-time:0.01
+ 
+1597124611: modifies:dotest:0.17s:completed
+ 
+1597124611: modifies vcg-time:0.02
+ 
+1597124611: modifies:i:0.18s:completed
+</code></pre><h2 id="完整例子骨架解析">完整例子骨架解析 <a class="markdownIt-Anchor" href="#完整例子骨架解析">#</a></h2><h3 id="例子源代码">例子源代码 <a class="markdownIt-Anchor" href="#例子源代码">#</a></h3><p>再进入细节之前，我们把完整的C源代码和HOL源代码展示下：</p><pre class="hljs"><code><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">f</span><span class="hljs-params">(<span class="hljs-keyword">int</span> c)</span>
+</span>{
+  <span class="hljs-keyword">while</span> (c &lt; <span class="hljs-number">10</span>) {
+    <span class="hljs-keyword">if</span> (c &lt; <span class="hljs-number">0</span>) { <span class="hljs-keyword">break</span>; }
+    c = c - <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> <span class="hljs-number">3</span>;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">g</span><span class="hljs-params">(<span class="hljs-keyword">int</span> d)</span>
+</span>{
+  <span class="hljs-keyword">while</span> (d &lt; <span class="hljs-number">10</span>) {
+    <span class="hljs-keyword">if</span> (d &lt; <span class="hljs-number">0</span>) { <span class="hljs-keyword">continue</span>; }
+    d = d - <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> <span class="hljs-number">3</span>;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">h</span><span class="hljs-params">(<span class="hljs-keyword">int</span> e)</span>
+</span>{
+  <span class="hljs-keyword">while</span> (e &lt; <span class="hljs-number">10</span>)
+    <span class="hljs-comment">/** INV: &quot;\&lt;lbrace&gt; True \&lt;rbrace&gt;&quot; */</span>
+  {
+    <span class="hljs-keyword">if</span> (e &lt; <span class="hljs-number">-10</span>) { <span class="hljs-keyword">continue</span>; }
+    <span class="hljs-keyword">if</span> (e &lt; <span class="hljs-number">0</span>) { <span class="hljs-keyword">break</span>; }
+    e = e - <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> e;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">i</span><span class="hljs-params">(<span class="hljs-keyword">int</span> x)</span>
+</span>{
+  <span class="hljs-keyword">int</span> y;
+  y = <span class="hljs-number">10</span>;
+  <span class="hljs-keyword">while</span> (x &lt; <span class="hljs-number">10</span>) {
+    <span class="hljs-keyword">while</span> (x + y &gt; <span class="hljs-number">15</span>) {
+      <span class="hljs-keyword">if</span> (x &lt; <span class="hljs-number">3</span>) { <span class="hljs-keyword">break</span>; }
+      y = y - <span class="hljs-number">2</span>;
+    }
+    <span class="hljs-keyword">if</span> (x &lt; <span class="hljs-number">3</span>) { <span class="hljs-keyword">continue</span>; }
+  }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">dotest</span><span class="hljs-params">(<span class="hljs-keyword">int</span> x)</span>
+</span>{
+  <span class="hljs-keyword">do</span> {
+    <span class="hljs-keyword">if</span> (x &lt; <span class="hljs-number">10</span>) <span class="hljs-keyword">break</span>;
+    x--;
+  } <span class="hljs-keyword">while</span> (x &gt;= <span class="hljs-number">10</span>);
+  <span class="hljs-keyword">return</span> x;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">f</span><span class="hljs-params">(<span class="hljs-keyword">int</span> c)</span>
+</span>{
+  <span class="hljs-keyword">while</span> (c &lt; <span class="hljs-number">10</span>) {
+    c = c - <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> <span class="hljs-number">3</span>;
+}
+</code></pre><p>对应的验证代码如下：</p><pre class="hljs"><code>theory breakcontinue
+imports &quot;CParser.CTranslation&quot;
+begin
+
+declare sep_conj_ac [simp add]
+
+external_file &quot;breakcontinue.c&quot;
+install_C_file &quot;breakcontinue.c&quot;
+
+context breakcontinue_global_addresses
+begin
+
+thm f_body_def
+thm g_body_def
+thm h_body_def
+thm i_body_def
+thm dotest_body_def
+
+lemma h:
+  &quot;Γ ⊢ ⦃ -10 &lt;=s ´e &amp; ´e &lt;s 0 ⦄
+  ´ret__int :== PROC h(´e)
+  ⦃ ´ret__int = ´e ⦄&quot;
+apply (hoare_rule HoarePartial.ProcNoRec1)
+apply (hoare_rule HoarePartial.Catch [where R = &quot;⦃ ´ret__int = ´e ⦄&quot;])
+  defer
+  apply vcg
+apply (hoare_rule HoarePartial.conseq
+           [where P' = &quot;λe. ⦃ ´e = e &amp; e &lt;s 0 &amp; -10 &lt;=s e ⦄&quot;
+            and Q' = &quot;λe. ⦃ ´e = e &amp; ´ret__int = e ⦄&quot;
+            and A' = &quot;λe. ⦃ ´e = e &amp; ´ret__int = e ⦄&quot;])
+  defer
+  apply (simp add: subset_iff)
+apply clarsimp
+apply (rule_tac R=&quot;{}&quot; in HoarePartial.Seq)
+  defer
+  apply vcg
+apply (rule_tac R=&quot;⦃ ´e = Z ⦄&quot; in HoarePartial.Seq)
+  defer
+  apply vcg
+apply (rule_tac R = &quot;⦃ ´e = Z &amp; ´global_exn_var = Break ⦄&quot; in HoarePartial.Catch)
+  defer
+  apply vcg
+  apply simp
+apply (rule_tac P' = &quot;⦃ ´e = Z &amp; Z &lt;s 0 &amp; -10 &lt;=s Z ⦄&quot;
+            and Q' = &quot;⦃ ´e = Z &amp; Z &lt;s 0 &amp; -10 &lt;=s Z ⦄ ∩ - ⦃ ´e &lt;s 10 ⦄&quot;
+            and A' = &quot;⦃ ´e = Z &amp; ´global_exn_var = Break ⦄&quot;
+         in HoarePartial.conseq_no_aux)
+  defer
+  apply simp
+apply (simp add: whileAnno_def)
+apply (rule HoarePartialDef.While)
+apply vcg
+apply (simp add: subset_iff)
+done
+
+(* another example where vcg fails, generating impossible sub-goals *)
+lemma dotest:
+  &quot;Γ ⊢ ⦃ ´x = 4 ⦄ ´ret__int :== PROC dotest(´x)
+       ⦃ ´ret__int = 4 ⦄&quot;
+apply (hoare_rule HoarePartial.ProcNoRec1)
+apply (hoare_rule HoarePartial.Catch [where R=&quot;⦃ ´ret__int = 4 ⦄&quot;])
+  apply (hoare_rule HoarePartial.Seq [where R=&quot;{}&quot;])
+    apply (hoare_rule HoarePartial.Seq [where R=&quot;⦃ ´x = 4 ⦄&quot;])
+      apply (hoare_rule HoarePartial.Catch [where R=&quot;⦃ ´x = 4 &amp; ´global_exn_var = Break ⦄&quot;])
+        apply (hoare_rule HoarePartial.Seq [where R=&quot;⦃ False ⦄&quot;])
+          apply (vcg, simp)
+        apply (hoare_rule HoarePartial.conseq_exploit_pre, simp)
+      apply (vcg, simp)
+    apply vcg
+  apply vcg
+apply vcg
+done
+
+end
+
+end
+</code></pre><h3 id="函数体定义">函数体定义 <a class="markdownIt-Anchor" href="#函数体定义">#</a></h3><p>前面几句我们已经了解了，是对C源码的解析：</p><pre class="hljs"><code>theory breakcontinue
+imports &quot;CParser.CTranslation&quot;
+begin
+
+declare sep_conj_ac [simp add]
+
+external_file &quot;breakcontinue.c&quot;
+install_C_file &quot;breakcontinue.c&quot;
+</code></pre><p>下面一句</p><pre class="hljs"><code>context breakcontinue_global_addresses
+</code></pre><p>实际上对应的是一个locale语句：</p><pre class="hljs"><code>locale breakcontinue_global_addresses
+  fixes symbol_table :: &quot;char list ⇒ 32 word&quot;
+</code></pre><p>关于locale，我们后面会详细介绍，这里先跳过，我们先要有个全局的印象。</p><p>下面就是函数定义体，以*_body_def开头的，跟C源代码中的函数一一对应：</p><pre class="hljs"><code>thm f_body_def
+thm g_body_def
+thm h_body_def
+thm i_body_def
+thm dotest_body_def
+</code></pre><p>这些thm是个什么东西呢？</p><p>我们展开其中一个来看一下：</p><pre class="hljs"><code>f_body ≡
+TRY
+  TRY
+    WHILE ´c &lt;s 0xA DO
+      IF ´c &lt;s 0 THEN
+        cbreak global_exn_var_'_update
+      FI;;
+      Guard SignedArithmetic
+       ⦃- 2147483648 ≤ sint ´c - sint 1 ∧
+        sint ´c - sint 1 ≤ 2147483647⦄
+       (´c :== ´c - 1)
+    OD
+  CATCH ccatchbrk global_exn_var_'
+  END;;
+  creturn global_exn_var_'_update ret__int_'_update
+   (λs. 3);;
+  Guard DontReach {} SKIP
+CATCH SKIP
+END
+</code></pre><p>我们跟f函数的代码对照着看，就会发现这基本上就是对这个函数C的逻辑的翻译：</p><pre class="hljs"><code><span class="hljs-function"><span class="hljs-keyword">int</span> <span class="hljs-title">f</span><span class="hljs-params">(<span class="hljs-keyword">int</span> c)</span>
+</span>{
+  <span class="hljs-keyword">while</span> (c &lt; <span class="hljs-number">10</span>) {
+    <span class="hljs-keyword">if</span> (c &lt; <span class="hljs-number">0</span>) { <span class="hljs-keyword">break</span>; }
+    c = c - <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> <span class="hljs-number">3</span>;
+}
+</code></pre><p>比如<code>while(c&lt;10){...}</code>就被翻译成<code>WHILE ´c &lt;s 0xA DO</code><br>有一点不同是，因为HOL的数值类型与C的数值类型并不一样，是没有值的字节数表示的限制的，所以需要增加对值的范围的检查：</p><pre class="hljs"><code>      Guard SignedArithmetic
+       ⦃- 2147483648 ≤ sint ´c - sint 1 ∧
+        sint ´c - sint 1 ≤ 2147483647⦄
+       (´c :== ´c - 1)
+</code></pre><h3 id="验证函数功能">验证函数功能 <a class="markdownIt-Anchor" href="#验证函数功能">#</a></h3><p>我们通过前面的工具翻译好C的逻辑之后，我们就可以来进行验证了。<br>从源代码看的话有一点tricky，我们将其展开之后，虽然有不少细节不理解，但是大致上我们可以理解验证的过程了。</p><p>我们要验证的h定理定义如下：</p><pre class="hljs"><code>lemma h:
+  &quot;Γ ⊢ ⦃ -10 &lt;=s ´e &amp; ´e &lt;s 0 ⦄
+  ´ret__int :== PROC h(´e)
+  ⦃ ´ret__int = ´e ⦄&quot;
+</code></pre><p>应用第一条规则HoarePartial.ProcNoRec1：</p><pre class="hljs"><code>apply (hoare_rule HoarePartial.ProcNoRec1)
+</code></pre><p>此时建立了第一个目标：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. Γ⊢ ⦃- 0xA &lt;=s ´e ∧ ´e &lt;s 0⦄
+        TRY
+          TRY
+            WHILE ´e &lt;s 0xA
+            INV ⦃True⦄
+            DO
+              TRY
+                Guard SignedArithmetic
+                 ⦃- 2147483648 ≤ - sint 0xA ∧
+                  - sint 0xA ≤ 2147483647⦄
+                 (IF ´e &lt;s - 0xA THEN
+                    ´global_exn_var :== Continue;;
+                    THROW
+                  FI);;
+                IF ´e &lt;s 0 THEN
+                  cbreak global_exn_var_'_update
+                FI;;
+                Guard SignedArithmetic
+                 ⦃- 2147483648 ≤ sint ´e - sint 1 ∧
+                  sint ´e - sint 1 ≤ 2147483647⦄
+                 (´e :== ´e - 1)
+              CATCH IF ´global_exn_var = Continue THEN
+                      SKIP
+                    ELSE
+                      THROW
+                    FI
+              END
+            OD
+          CATCH ccatchbrk global_exn_var_'
+          END;;
+          creturn global_exn_var_'_update ret__int_'_update
+           e_';;
+          Guard DontReach {} SKIP
+        CATCH SKIP
+        END
+        ⦃´ret__int = ´e⦄
+</code></pre><p>我们加入一个Catch规则：</p><pre class="hljs"><code>apply (hoare_rule HoarePartial.Catch [where R = &quot;⦃ ´ret__int = ´e ⦄&quot;])
+</code></pre><p>现在变成两个目标，如下：</p><pre class="hljs"><code>proof (prove)
+goal (2 subgoals):
+ 1. Γ⊢ ⦃- 0xA &lt;=s ´e ∧ ´e &lt;s 0⦄
+        TRY
+          WHILE ´e &lt;s 0xA
+          INV ⦃True⦄
+          DO
+            TRY
+              Guard SignedArithmetic
+               ⦃- 2147483648 ≤ - sint 0xA ∧
+                - sint 0xA ≤ 2147483647⦄
+               (IF ´e &lt;s - 0xA THEN
+                  ´global_exn_var :== Continue;;
+                  THROW
+                FI);;
+              IF ´e &lt;s 0 THEN
+                cbreak global_exn_var_'_update
+              FI;;
+              Guard SignedArithmetic
+               ⦃- 2147483648 ≤ sint ´e - sint 1 ∧
+                sint ´e - sint 1 ≤ 2147483647⦄
+               (´e :== ´e - 1)
+            CATCH IF ´global_exn_var = Continue THEN
+                    SKIP
+                  ELSE
+                    THROW
+                  FI
+            END
+          OD
+        CATCH ccatchbrk global_exn_var_'
+        END;;
+        creturn global_exn_var_'_update ret__int_'_update
+         e_';;
+        Guard DontReach {} SKIP
+        ⦃´ret__int = ´e⦄,⦃´ret__int = ´e⦄
+ 2. Γ⊢ ⦃´ret__int = ´e⦄ SKIP ⦃´ret__int = ´e⦄
+</code></pre><p>然后我们apply一次vcg，将目标化简成一个：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. Γ⊢ ⦃- 0xA &lt;=s ´e ∧ ´e &lt;s 0⦄
+        TRY
+          WHILE ´e &lt;s 0xA
+          INV ⦃True⦄
+          DO
+            TRY
+              Guard SignedArithmetic
+               ⦃- 2147483648 ≤ - sint 0xA ∧
+                - sint 0xA ≤ 2147483647⦄
+               (IF ´e &lt;s - 0xA THEN
+                  ´global_exn_var :== Continue;;
+                  THROW
+                FI);;
+              IF ´e &lt;s 0 THEN
+                cbreak global_exn_var_'_update
+              FI;;
+              Guard SignedArithmetic
+               ⦃- 2147483648 ≤ sint ´e - sint 1 ∧
+                sint ´e - sint 1 ≤ 2147483647⦄
+               (´e :== ´e - 1)
+            CATCH IF ´global_exn_var = Continue THEN
+                    SKIP
+                  ELSE
+                    THROW
+                  FI
+            END
+          OD
+        CATCH ccatchbrk global_exn_var_'
+        END;;
+        creturn global_exn_var_'_update ret__int_'_update
+         e_';;
+        Guard DontReach {} SKIP
+        ⦃´ret__int = ´e⦄,⦃´ret__int = ´e⦄
+</code></pre><p>然后我们再加上一层约束规则：</p><pre class="hljs"><code>apply (hoare_rule HoarePartial.conseq
+           [where P' = &quot;λe. ⦃ ´e = e &amp; e &lt;s 0 &amp; -10 &lt;=s e ⦄&quot;
+            and Q' = &quot;λe. ⦃ ´e = e &amp; ´ret__int = e ⦄&quot;
+            and A' = &quot;λe. ⦃ ´e = e &amp; ´ret__int = e ⦄&quot;])
+</code></pre><p>现在又变成两个子目标：</p><pre class="hljs"><code>proof (prove)
+goal (2 subgoals):
+ 1. ∀Z. Γ⊢ ⦃´e = Z ∧ Z &lt;s 0 ∧ - 0xA &lt;=s Z⦄
+            TRY
+              WHILE ´e &lt;s 0xA
+              INV ⦃True⦄
+              DO
+                TRY
+                  Guard SignedArithmetic
+                   ⦃- 2147483648 ≤ - sint 0xA ∧
+                    - sint 0xA ≤ 2147483647⦄
+                   (IF ´e &lt;s - 0xA THEN
+                      ´global_exn_var :== Continue;;
+                      THROW
+                    FI);;
+                  IF ´e &lt;s 0 THEN
+                    cbreak global_exn_var_'_update
+                  FI;;
+                  Guard SignedArithmetic
+                   ⦃- 2147483648 ≤ sint ´e - sint 1 ∧
+                    sint ´e - sint 1 ≤ 2147483647⦄
+                   (´e :== ´e - 1)
+                CATCH IF ´global_exn_var = Continue THEN
+                        SKIP
+                      ELSE
+                        THROW
+                      FI
+                END
+              OD
+            CATCH ccatchbrk global_exn_var_'
+            END;;
+            creturn global_exn_var_'_update
+             ret__int_'_update e_';;
+            Guard DontReach {} SKIP
+            ⦃´e = Z ∧ ´ret__int = Z⦄,
+            ⦃´e = Z ∧ ´ret__int = Z⦄
+ 2. ⋀s. - 0xA &lt;=s e_' s ∧ e_' s &lt;s 0 ⟹
+         ∃Z. (e_' s = Z ∧ Z &lt;s 0 ∧ - 0xA &lt;=s Z) ∧
+             ⦃´e = Z ∧ ´ret__int = Z⦄ ⊆ ⦃´ret__int = ´e⦄ ∧
+             ⦃´e = Z ∧ ´ret__int = Z⦄ ⊆ ⦃´ret__int = ´e⦄
+</code></pre><p>我们apply(simp add: subset_iff)来化简一下，现在只剩一个子目标了：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. ∀Z. Γ⊢ ⦃´e = Z ∧ Z &lt;s 0 ∧ - 0xA &lt;=s Z⦄
+            TRY
+              WHILE ´e &lt;s 0xA
+              INV ⦃True⦄
+              DO
+                TRY
+                  Guard SignedArithmetic
+                   ⦃- 2147483648 ≤ - sint 0xA ∧
+                    - sint 0xA ≤ 2147483647⦄
+                   (IF ´e &lt;s - 0xA THEN
+                      ´global_exn_var :== Continue;;
+                      THROW
+                    FI);;
+                  IF ´e &lt;s 0 THEN
+                    cbreak global_exn_var_'_update
+                  FI;;
+                  Guard SignedArithmetic
+                   ⦃- 2147483648 ≤ sint ´e - sint 1 ∧
+                    sint ´e - sint 1 ≤ 2147483647⦄
+                   (´e :== ´e - 1)
+                CATCH IF ´global_exn_var = Continue THEN
+                        SKIP
+                      ELSE
+                        THROW
+                      FI
+                END
+              OD
+            CATCH ccatchbrk global_exn_var_'
+            END;;
+            creturn global_exn_var_'_update
+             ret__int_'_update e_';;
+            Guard DontReach {} SKIP
+            ⦃´e = Z ∧ ´ret__int = Z⦄,
+            ⦃´e = Z ∧ ´ret__int = Z⦄
+</code></pre><p>下面我们再通过apply clarsimp来化简一下：</p><pre class="hljs"><code>proof (prove)
+goal (1 subgoal):
+ 1. ⋀Z. Γ⊢ ⦃´e = Z ∧ Z &lt;s 0 ∧ 0xFFFFFFF6 &lt;=s Z⦄
+            TRY
+              WHILE ´e &lt;s 0xA
+              INV UNIV
+              DO
+                TRY
+                  Guard SignedArithmetic UNIV
+                   (IF ´e &lt;s 0xFFFFFFF6 THEN
+                      ´global_exn_var :== Continue;;
+                      THROW
+                    FI);;
+                  IF ´e &lt;s 0 THEN
+                    cbreak global_exn_var_'_update
+                  FI;;
+                  Guard SignedArithmetic
+                   ⦃- 2147483648 &lt; sint ´e ∧
+                    sint ´e ≤ 2147483648⦄
+                   (´e :== ´e - 1)
+                CATCH IF ´global_exn_var = Continue THEN
+                        SKIP
+                      ELSE
+                        THROW
+                      FI
+                END
+              OD
+            CATCH ccatchbrk global_exn_var_'
+            END;;
+            creturn global_exn_var_'_update
+             ret__int_'_update e_';;
+            Guard DontReach {} SKIP
+            ⦃´e = Z ∧ ´ret__int = Z⦄,
+            ⦃´e = Z ∧ ´ret__int = Z⦄
+</code></pre><p>后面的思路类似，都是apply rule_tac，然后再vcg加化简，最后整个目标被证明。</p><h3 id="再看一个例子">再看一个例子 <a class="markdownIt-Anchor" href="#再看一个例子">#</a></h3><p>前面堆的有点多，大家可能有点晕了。别担心，我们换个例子，大家再试图理解下：</p><pre class="hljs"><code>lemma dotest:
+  &quot;Γ ⊢ ⦃ ´x = 4 ⦄ ´ret__int :== PROC dotest(´x)
+       ⦃ ´ret__int = 4 ⦄&quot;
+apply (hoare_rule HoarePartial.ProcNoRec1)
+apply (hoare_rule HoarePartial.Catch [where R=&quot;⦃ ´ret__int = 4 ⦄&quot;])
+  apply (hoare_rule HoarePartial.Seq [where R=&quot;{}&quot;])
+    apply (hoare_rule HoarePartial.Seq [where R=&quot;⦃ ´x = 4 ⦄&quot;])
+      apply (hoare_rule HoarePartial.Catch [where R=&quot;⦃ ´x = 4 &amp; ´global_exn_var = Break ⦄&quot;])
+        apply (hoare_rule HoarePartial.Seq [where R=&quot;⦃ False ⦄&quot;])
+</code></pre><p>通过上一个例子，我们已经理解了，这些hoare_rule都是加规则，并没有进行任何化简与推理，所以这6条语句会形成6个子目标：</p><pre class="hljs"><code>proof (prove)
+goal (6 subgoals):
+ 1. Γ⊢ ⦃´x = 4⦄
+        IF ´x &lt;s 0xA THEN
+          cbreak global_exn_var_'_update
+        FI;;
+        Guard SignedArithmetic
+         ⦃- 2147483648 ≤ sint ´x - sint 1 ∧
+          sint ´x - sint 1 ≤ 2147483647⦄
+         (´x :== ´x - 1)
+        ⦃False⦄,⦃´x = 4 ∧ ´global_exn_var = Break⦄
+ 2. Γ⊢ ⦃False⦄
+        WHILE 0xA &lt;=s ´x DO
+          IF ´x &lt;s 0xA THEN
+            cbreak global_exn_var_'_update
+          FI;;
+          Guard SignedArithmetic
+           ⦃- 2147483648 ≤ sint ´x - sint 1 ∧
+            sint ´x - sint 1 ≤ 2147483647⦄
+           (´x :== ´x - 1)
+        OD
+        ⦃´x = 4⦄,⦃´x = 4 ∧ ´global_exn_var = Break⦄
+ 3. Γ⊢ ⦃´x = 4 ∧ ´global_exn_var = Break⦄
+        ccatchbrk global_exn_var_' ⦃´x = 4⦄,⦃´ret__int = 4⦄
+ 4. Γ⊢ ⦃´x = 4⦄
+        creturn global_exn_var_'_update ret__int_'_update
+         x_'
+        {},⦃´ret__int = 4⦄
+ 5. Γ⊢ {} Guard DontReach {} SKIP ⦃´ret__int = 4⦄,
+        ⦃´ret__int = 4⦄
+ 6. Γ⊢ ⦃´ret__int = 4⦄ SKIP ⦃´ret__int = 4⦄
+</code></pre><p>应用一次apply(simp, vcg)，减少到5个：</p><pre class="hljs"><code>proof (prove)
+goal (5 subgoals):
+ 1. Γ⊢ ⦃False⦄
+        WHILE 0xA &lt;=s ´x DO
+          IF ´x &lt;s 0xA THEN
+            cbreak global_exn_var_'_update
+          FI;;
+          Guard SignedArithmetic
+           ⦃- 2147483648 ≤ sint ´x - sint 1 ∧
+            sint ´x - sint 1 ≤ 2147483647⦄
+           (´x :== ´x - 1)
+        OD
+        ⦃´x = 4⦄,⦃´x = 4 ∧ ´global_exn_var = Break⦄
+ 2. Γ⊢ ⦃´x = 4 ∧ ´global_exn_var = Break⦄
+        ccatchbrk global_exn_var_' ⦃´x = 4⦄,⦃´ret__int = 4⦄
+ 3. Γ⊢ ⦃´x = 4⦄
+        creturn global_exn_var_'_update ret__int_'_update
+         x_'
+        {},⦃´ret__int = 4⦄
+ 4. Γ⊢ {} Guard DontReach {} SKIP ⦃´ret__int = 4⦄,
+        ⦃´ret__int = 4⦄
+ 5. Γ⊢ ⦃´ret__int = 4⦄ SKIP ⦃´ret__int = 4⦄
+</code></pre><p>加一条规则，同时化简：<code>apply (hoare_rule HoarePartial.conseq_exploit_pre, simp)</code><br>化简成4条子目标了，而且我们看到，跟代码结构密切相关的第一条子目标已经被证明了：</p><pre class="hljs"><code>proof (prove)
+goal (4 subgoals):
+ 1. Γ⊢ ⦃´x = 4 ∧ ´global_exn_var = Break⦄
+        ccatchbrk global_exn_var_' ⦃´x = 4⦄,⦃´ret__int = 4⦄
+ 2. Γ⊢ ⦃´x = 4⦄
+        creturn global_exn_var_'_update ret__int_'_update
+         x_'
+        {},⦃´ret__int = 4⦄
+ 3. Γ⊢ {} Guard DontReach {} SKIP ⦃´ret__int = 4⦄,
+        ⦃´ret__int = 4⦄
+ 4. Γ⊢ ⦃´ret__int = 4⦄ SKIP ⦃´ret__int = 4⦄
+</code></pre><p>再来一次apply(simp, vcg)，带Break的第一条也被消解掉了：</p><pre class="hljs"><code>proof (prove)
+goal (3 subgoals):
+ 1. Γ⊢ ⦃´x = 4⦄
+        creturn global_exn_var_'_update ret__int_'_update
+         x_'
+        {},⦃´ret__int = 4⦄
+ 2. Γ⊢ {} Guard DontReach {} SKIP ⦃´ret__int = 4⦄,
+        ⦃´ret__int = 4⦄
+ 3. Γ⊢ ⦃´ret__int = 4⦄ SKIP ⦃´ret__int = 4⦄
+</code></pre><p>Again，一个vcg，creturn也被解决掉了：</p><pre class="hljs"><code>proof (prove)
+goal (2 subgoals):
+ 1. Γ⊢ {} Guard DontReach {} SKIP ⦃´ret__int = 4⦄,
+        ⦃´ret__int = 4⦄
+ 2. Γ⊢ ⦃´ret__int = 4⦄ SKIP ⦃´ret__int = 4⦄
+</code></pre><p>再来两次apply vcg，目标得证。</p><h2 id="小结">小结 <a class="markdownIt-Anchor" href="#小结">#</a></h2><p>这一节列了这么多，其实就是想让大家先有一个全局的框架：</p><ol><li>通过CParser.CTranslation来将C代码翻译成中间表示形式</li><li>通过external_file来指定具体的c代码</li><li>通过install_C_file完成翻译过程</li><li>通过thm *<em>body_def来获取对函数*</em>body的表示</li><li>通过定理中调用PROC去引用C源代码的中间表示</li><li>通过hoare_rule来增加要验证的规则</li><li>其中HoarePartial.ProcNoRec1是将C代码变成子目标的方法</li><li>主要的证明和化简工具是simp的各种变种还有vcg</li></ol></div><div dir="ltr" class="level article-bar is-mobile"><div class="level-item has-text-centered"><a title="previous page" class="previouse-article-link" href="fv5.html"><span class="icon icon-previous" data-icon="previous"></span><span class="link-content">&laquo; Previous</span></a></div><div class="level-item has-text-centered"><a title="font size" class="link-item link-item-size"><span class="icon icon-size" data-icon="size"></span></a></div><div class="level-item has-text-centered"><a title="table of content" class="link-item link-item-toc"><span class="icon icon-toc" data-icon="toc"></span></a></div><div class="level-item has-text-centered"><a title="top" href="#"><span class="icon icon-up" data-icon="up"></span> <span class="link-content">⤊ Top</span></a></div><div class="level-item has-text-centered"><a title="next page" class="next-article-link" href="fv7.html"><span class="icon icon-next" data-icon="next"></span><span class="link-content">Next &raquo;</span></a></div></div></div><div class="column is-2-widescreen is-hidden"></div></div><div class="columns foot"><div class="column is-3 is-offset-9 build-by">Build by <a href="https://github.com/ruanyf/loppo" target="_blank">Loppo</a> 0.6.20</div></div><div class="book-toc notification is-warning is-hidden"><h3>Table of chapters &nbsp;<span class="title-close"><a class="button is-danger"> Close</a></span></h3><ul class="chapter-area"><li class="chapter-item"><a href="fv1.html">操作系统形式化验证实践教程(1) - 证明第一个定理</a></li><li class="chapter-item"><a href="fv10.html">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</a></li><li class="chapter-item"><a href="fv11.html">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</a></li><li class="chapter-item"><a href="fv12.html">操作系统形式化验证实践教程(12) - 经典命题逻辑与公式查错方法</a></li><li class="chapter-item"><a href="fv13.html">操作系统形式化验证实践教程(13) - 符号的输入方法</a></li><li class="chapter-item"><a href="fv2.html">操作系统形式化验证实践教程(2) - HOL列表与集合</a></li><li class="chapter-item"><a href="fv3.html">操作系统形式化验证实践教程(3) - 自动证明工具</a></li><li class="chapter-item"><a href="fv4.html">操作系统形式化验证实践教程(4) - 工具环境</a></li><li class="chapter-item"><a href="fv5.html">操作系统形式化验证实践教程(5) - 搭建seL4环境</a></li><li class="chapter-item chapter-item-current"><a href="fv6.html">操作系统形式化验证实践教程(6) - 解析C源代码</a></li><li class="chapter-item"><a href="fv7.html">操作系统形式化验证实践教程(7) - C代码的自动验证</a></li><li class="chapter-item"><a href="fv8.html">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</a></li><li class="chapter-item"><a href="fv9.html">操作系统形式化验证实践教程(9) - 规范与证明概述</a></li></ul></div><div class="progress-indicator"></div><!-- SCRIPTS --><script>var LOPPO={current_path:"fv6.md",relative_root_path:"",article_toc:'<ul class="markdownIt-TOC">\n<li><a href="#%E6%9E%84%E9%80%A0c%E8%A7%A3%E6%9E%90%E5%99%A8">构造C解析器</a></li>\n<li><a href="#vcg%E7%9A%84%E6%84%9F%E6%80%A7%E8%AE%A4%E8%AF%86">vcg的感性认识</a></li>\n<li><a href="#%E5%8F%97%E9%99%90c%E8%AF%AD%E8%A8%80%E5%AD%90%E9%9B%86%E4%B8%8E%E8%AF%AD%E6%B3%95%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7">受限C语言子集与语法分析工具</a></li>\n<li><a href="#%E5%9C%A8hol%E4%B8%AD%E8%AF%BB%E5%8F%96c%E4%BB%A3%E7%A0%81">在HOL中读取C代码</a></li>\n<li><a href="#%E5%AE%8C%E6%95%B4%E4%BE%8B%E5%AD%90%E9%AA%A8%E6%9E%B6%E8%A7%A3%E6%9E%90">完整例子骨架解析</a>\n<ul>\n<li><a href="#%E4%BE%8B%E5%AD%90%E6%BA%90%E4%BB%A3%E7%A0%81">例子源代码</a></li>\n<li><a href="#%E5%87%BD%E6%95%B0%E4%BD%93%E5%AE%9A%E4%B9%89">函数体定义</a></li>\n<li><a href="#%E9%AA%8C%E8%AF%81%E5%87%BD%E6%95%B0%E5%8A%9F%E8%83%BD">验证函数功能</a></li>\n<li><a href="#%E5%86%8D%E7%9C%8B%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90">再看一个例子</a></li>\n</ul>\n</li>\n<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>\n</ul>\n'}</script><script src="assets/js/app.js"></script></body></html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html><html><head><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta charset="utf-8"><title>操作系统形式化验证实践教程(8) - 用Haskell做系统建模 - 哲学系炼金术指南</title><meta name="description" content=""><meta name="author" content=""><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1"><link rel="stylesheet" href="assets/css/bulma.min.css"><link rel="stylesheet" href="assets/css/app.css"><!--[if lt IE 9]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]--><link rel="shortcut icon" href=""></head><body dir="ltr"><nav class="columns navbar"><div class="column logo is-3 is-offset-1"><a class="is-brand" href="index.html">哲学系炼金术指南</a></div></nav><div class="columns content"><div class="column is-2-desktop is-3-widescreen is-hidden-touch"></div><div class="column article-container is-11-tablet is-8-desktop is-6-widescreen"><div class="breadcrumb-area"><a href="index.html" class="breadcrumb-item">Home</a><span class="breadcrumb-delimiter"> &gt; </span><a href="fv8.html" class="breadcrumb-item">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</a></div><h1 class="article-title">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</h1><div class="article"><p>到上节为止，我们验证的虽然已经是C语言源代码了，但是跟操作系统的关系还基本没有。<br>从这一节开始，我们开始进入操作系统的部分。</p><p>操作系统涉及到硬件，也涉及到整体的功能的设计。这部分在seL4中是使用Haskell语言实现的。作为本系列教程的配套，我们有《Haskell快餐教程》，请没有haskell语言基础的同学先移步学习第一节，然后我们回来看Haskell代码。另外说一句，我们也有《Standard ML快餐教程》来介绍Standard ML语言的，不知道大家看到了没有。</p><p>大家刚学习Haskell，对Haskell还不熟悉。所以我们先从简单的开始，边学语言边验证系统。</p><h2 id="haskell字长处理">Haskell字长处理 <a class="markdownIt-Anchor" href="#haskell字长处理">#</a></h2><p>我们看来seL4验证中我们要学习的第一个Haskell代码，字长处理：</p><pre class="hljs"><code>&gt; module Data.WordLib where
+&gt;
+&gt; import Data.Word
+&gt; import Data.Bits
+&gt;
+&gt; wordBits :: Int
+&gt; wordBits = finiteBitSize (undefined::Word)
+&gt;
+&gt; wordSize :: Int
+&gt; wordSize = wordBits `div` 8
+&gt;
+&gt; wordSizeCase :: a -&gt; a -&gt; a
+&gt; wordSizeCase a b = case wordBits of
+&gt;         32 -&gt; a
+&gt;         64 -&gt; b
+&gt;         _ -&gt; error &quot;Unknown word size&quot;
+&gt;
+&gt; wordRadix :: Int
+&gt; wordRadix = wordSizeCase 5 6
+</code></pre><p>首先是引入了对字和位处理的两个包：</p><pre class="hljs"><code>&gt; import Data.Word
+&gt; import Data.Bits
+</code></pre><p>wordBits是计算一个Word中包含了多少个比特。通过finiteBitSize函数来计算，函数定义参考可以参见：<a href="https://www.stackage.org/haddock/lts-16.10/base-4.13.0.0/Data-Bits.html#v:finiteBitSize" target="_blank" rel="noopener">https://www.stackage.org/haddock/lts-16.10/base-4.13.0.0/Data-Bits.html#v:finiteBitSize</a></p><p>我们可以在<a href="https://www.stackage.org/" target="_blank" rel="noopener">https://www.stackage.org/</a><br>中搜索API的文档：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-9baec177400ffa00.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="haskell search"></p><p>我们可以在ghci中去尝试下相关代码：</p><pre class="hljs"><code><span class="hljs-type">Prelude</span>&gt; <span class="hljs-keyword">import</span> Data.Bits
+<span class="hljs-type">Prelude</span> <span class="hljs-type">Data</span>.<span class="hljs-type">Bits</span>&gt; wordBits = finiteBitSize (undefined::<span class="hljs-type">Word</span>)
+<span class="hljs-type">Prelude</span> <span class="hljs-type">Data</span>.<span class="hljs-type">Bits</span>&gt; :set +t
+<span class="hljs-type">Prelude</span> <span class="hljs-type">Data</span>.<span class="hljs-type">Bits</span>&gt; wordBits
+<span class="hljs-number">64</span>
+<span class="hljs-title">it</span> :: <span class="hljs-type">Int</span>
+</code></pre><p>可知，我用的是64位系统，所以wordBits为64.<br>换算成字节，是8个字节：</p><pre class="hljs"><code><span class="hljs-type">Prelude</span> <span class="hljs-type">Data</span>.<span class="hljs-type">Bits</span>&gt; wordSize = wordBits `div` <span class="hljs-number">8</span>
+<span class="hljs-title">wordSize</span> :: <span class="hljs-type">Int</span>
+<span class="hljs-type">Prelude</span> <span class="hljs-type">Data</span>.<span class="hljs-type">Bits</span>&gt; wordSize
+<span class="hljs-number">8</span>
+<span class="hljs-title">it</span> :: <span class="hljs-type">Int</span>
+</code></pre><p>再看后面的case表达式：</p><pre class="hljs"><code>&gt; wordSizeCase :: a -&gt; a -&gt; a
+&gt; wordSizeCase a b = case wordBits of
+&gt;         32 -&gt; a
+&gt;         64 -&gt; b
+&gt;         _ -&gt; error &quot;Unknown word size&quot;
+&gt;
+&gt; wordRadix :: Int
+&gt; wordRadix = wordSizeCase 5 6
+</code></pre><p>32位对应5，64位对应6，所以我这个环境下wordRadix为6.</p><h2 id="寄存器">寄存器 <a class="markdownIt-Anchor" href="#寄存器">#</a></h2><p>下面我们开始进入硬件建模的第一个元素：寄存器。</p><p>我们以ARM和X64为例，看下寄存器的基本结构：<br><img src="https://upload-images.jianshu.io/upload_images/1638145-cf58e3f74718c466.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="寄存器.png"></p><p>寄存器信息都定义于SEL4.Machine.RegisterSet中：</p><pre class="hljs"><code>\item[The message information register] contains metadata about the contents of an IPC message, such as the length of the message and whether a capability is attached.
+
+&gt; msgInfoRegister :: Register
+&gt; msgInfoRegister = Register Arch.msgInfoRegister
+
+\item[Message registers] are used to hold the message being sent by an object invocation.
+
+This list may be empty, though it should contain as many registers as possible. Message words that do not fit in these registers will be transferred in a buffer in user-accessible memory.
+
+&gt; msgRegisters :: [Register]
+&gt; msgRegisters = map Register Arch.msgRegisters
+
+\item[The capability register] is used when performing a system call, to specify the location of the invoked capability.
+
+&gt; capRegister :: Register
+&gt; capRegister = Register Arch.capRegister
+
+\item[The badge register] is used to return the badge of the capability from which a message was received. This is typically the same as &quot;capRegister&quot;.
+
+&gt; badgeRegister :: Register
+&gt; badgeRegister = Register Arch.badgeRegister
+
+\item[The frame registers] are the registers that are used by the architecture's function calling convention. They generally include the current instruction and stack pointers, and the argument registers. They appear at the beginning of a &quot;ReadRegisters&quot; or &quot;WriteRegisters&quot; message, and are one of the two subsets of the integer registers that can be copied by &quot;CopyRegisters&quot;.
+
+&gt; frameRegisters :: [Register]
+&gt; frameRegisters = map Register Arch.frameRegisters
+
+\item[The general-purpose registers] include all registers that are not in &quot;frameRegisters&quot;, except any kernel-reserved or constant registers (such as the MIPS &quot;zero&quot;, &quot;k0&quot; and &quot;k1&quot; registers). They appear after the frame registers in a &quot;ReadRegisters&quot; or &quot;WriteRegisters&quot; message, and are the second of two subsets of the integer registers that can be copied by &quot;CopyRegisters&quot;.
+
+&gt; gpRegisters :: [Register]
+&gt; gpRegisters = map Register Arch.gpRegisters
+
+\item[An exception message] is sent by the kernel when a hardware exception is raised by a user-level thread. The message contains registers from the current user-level state, as specified by this list. Two architecture-defined words, specifying the type and cause of the exception, are appended to the message. The reply may contain updated values for these registers.
+
+&gt; exceptionMessage :: [Register]
+&gt; exceptionMessage = map Register Arch.exceptionMessage
+
+\item[A syscall message] is sent by the kernel when a user thread performs a system call that is not recognised by seL4. The message contains registers from the current user-level state, as specified by this list. A word containing the system call number is appended to the message. The reply may contain updated values for these registers.
+
+&gt; syscallMessage :: [Register]
+&gt; syscallMessage = map Register Arch.syscallMessage
+
+&gt; tlsBaseRegister :: Register
+&gt; tlsBaseRegister = Register Arch.tlsBaseRegister
+
+\item[The fault register] holds the instruction which was being executed when the fault occured.
+
+&gt; faultRegister :: Register
+&gt; faultRegister = Register Arch.faultRegister
+
+\item[The next instruction register] holds the instruction that will be executed upon resumption.
+
+&gt; nextInstructionRegister :: Register
+&gt; nextInstructionRegister = Register Arch.nextInstructionRegister
+</code></pre><p>具体的实现定义在架构相关的实现文件中。</p><p>ARM架构的所有寄存器为：</p><pre class="hljs"><code>&gt; data Register =
+&gt;     R0 | R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 | R9 | SL | FP | IP | SP |
+&gt;     LR | NextIP | FaultIP | CPSR | TPIDRURW | TPIDRURO
+</code></pre><p>下面是ARM对于逻辑寄存器实现的定义：</p><pre class="hljs"><code>&gt; capRegister = R0
+&gt; msgInfoRegister = R1
+&gt; msgRegisters = [R2 .. R5]
+&gt; badgeRegister = R0
+&gt; faultRegister = FaultIP
+&gt; nextInstructionRegister = NextIP
+&gt; frameRegisters = FaultIP : SP : CPSR : [R0, R1] ++ [R8 .. IP]
+&gt; gpRegisters = [R2, R3, R4, R5, R6, R7, LR, TPIDRURW, TPIDRURO]
+&gt; exceptionMessage = [FaultIP, SP, CPSR]
+&gt; syscallMessage = [R0 .. R7] ++ [FaultIP, SP, LR, CPSR]
+&gt; tlsBaseRegister = TPIDRURW
+</code></pre><p>而X64的所有寄存器如下：</p><pre class="hljs"><code>&gt; data Register =
+&gt;     RAX | RBX | RCX | RDX | RSI | RDI | RBP |
+&gt;     R8 | R9 | R10 | R11 | R12 | R13 | R14 | R15 |
+&gt;     FaultIP | -- &quot;FaultIP&quot;
+&gt;     FS_BASE | GS_BASE |
+&gt;     ErrorRegister | NextIP | CS | FLAGS | RSP | SS
+</code></pre><p>映射到逻辑寄存器上：</p><pre class="hljs"><code>&gt; capRegister = RDI
+&gt; msgInfoRegister = RSI
+&gt; msgRegisters = [R10, R8, R9, R15]
+&gt; badgeRegister = capRegister
+&gt; faultRegister = FaultIP
+&gt; nextInstructionRegister = NextIP
+&gt; frameRegisters = FaultIP : RSP : FLAGS : [RAX .. R15]
+&gt; gpRegisters = [FS_BASE, GS_BASE]
+&gt; exceptionMessage = [FaultIP, RSP, FLAGS]
+&gt; tlsBaseRegister = FS_BASE
+
+&gt; syscallMessage = [RAX .. R15] ++ [FaultIP, RSP, FLAGS]
+</code></pre><p>这些只是通用的，每种架构还有自己的特色。</p><p>比如ARM支持Hypervisor的话，支持VCPU相关寄存器：</p><pre class="hljs"><code>&gt; data VCPUReg =
+&gt;       VCPURegSCTLR
+&gt;     | VCPURegACTLR
+&gt;     | VCPURegTTBCR
+&gt;     | VCPURegTTBR0
+&gt;     | VCPURegTTBR1
+&gt;     | VCPURegDACR
+&gt;     | VCPURegDFSR
+&gt;     | VCPURegIFSR
+&gt;     | VCPURegADFSR
+&gt;     | VCPURegAIFSR
+&gt;     | VCPURegDFAR
+&gt;     | VCPURegIFAR
+&gt;     | VCPURegPRRR
+&gt;     | VCPURegNMRR
+&gt;     | VCPURegCIDR
+&gt;     | VCPURegTPIDRPRW
+&gt;     | VCPURegFPEXC
+&gt;     | VCPURegLRsvc
+&gt;     | VCPURegSPsvc
+&gt;     | VCPURegLRabt
+&gt;     | VCPURegSPabt
+&gt;     | VCPURegLRund
+&gt;     | VCPURegSPund
+&gt;     | VCPURegLRirq
+&gt;     | VCPURegSPirq
+&gt;     | VCPURegLRfiq
+&gt;     | VCPURegSPfiq
+&gt;     | VCPURegR8fiq
+&gt;     | VCPURegR9fiq
+&gt;     | VCPURegR10fiq
+&gt;     | VCPURegR11fiq
+&gt;     | VCPURegR12fiq
+&gt;     | VCPURegSPSRsvc
+&gt;     | VCPURegSPSRabt
+&gt;     | VCPURegSPSRund
+&gt;     | VCPURegSPSRirq
+&gt;     | VCPURegSPSRfiq
+&gt;     | VCPURegCNTV_CTL
+&gt;     | VCPURegCNTV_CVALhigh
+&gt;     | VCPURegCNTV_CVALlow
+&gt;     | VCPURegCNTVOFFhigh
+&gt;     | VCPURegCNTVOFFlow
+</code></pre><p>对于X64 CPU，咱们有GDT需要处理：</p><pre class="hljs"><code>&gt; data GDTSlot
+&gt;     = GDT_NULL
+&gt;     | GDT_CS_0
+&gt;     | GDT_DS_0
+&gt;     | GDT_TSS
+&gt;     | GDT_TSS_Padding
+&gt;     | GDT_CS_3
+&gt;     | GDT_DS_3
+&gt;     | GDT_FS
+&gt;     | GDT_GS
+&gt;     | GDT_ENTRIES
+&gt;     deriving (Eq, Show, Enum, Ord, Ix)
+
+&gt; gdtToSel :: GDTSlot -&gt; Word
+&gt; gdtToSel g = (fromIntegral (fromEnum g) `shiftL` 3 ) .|. 3
+
+&gt; gdtToSel_masked :: GDTSlot -&gt; Word
+&gt; gdtToSel_masked g = gdtToSel g .|. 3
+
+&gt; selCS3 = gdtToSel_masked GDT_CS_3
+&gt; selDS3 = gdtToSel_masked GDT_DS_3
+&gt; selFS = gdtToSel_masked GDT_FS
+&gt; selGS = gdtToSel_masked GDT_GS
+&gt; selCS0 = gdtToSel_masked GDT_CS_0
+&gt; selDS0 = gdtToSel GDT_DS_0
+</code></pre><h2 id="小结">小结 <a class="markdownIt-Anchor" href="#小结">#</a></h2><p>至此，我们的画卷基本上都徐徐展开了，做操作系统的验证，不光需要Isabelle/HOL, Standard ML, 还有Haskell，还需要硬件相关知识。后面我们还会涉及到操作系统软件相关的知识。</p></div><div dir="ltr" class="level article-bar is-mobile"><div class="level-item has-text-centered"><a title="previous page" class="previouse-article-link" href="fv7.html"><span class="icon icon-previous" data-icon="previous"></span><span class="link-content">&laquo; Previous</span></a></div><div class="level-item has-text-centered"><a title="font size" class="link-item link-item-size"><span class="icon icon-size" data-icon="size"></span></a></div><div class="level-item has-text-centered"><a title="table of content" class="link-item link-item-toc"><span class="icon icon-toc" data-icon="toc"></span></a></div><div class="level-item has-text-centered"><a title="top" href="#"><span class="icon icon-up" data-icon="up"></span> <span class="link-content">⤊ Top</span></a></div><div class="level-item has-text-centered"><a title="next page" class="next-article-link" href="fv9.html"><span class="icon icon-next" data-icon="next"></span><span class="link-content">Next &raquo;</span></a></div></div></div><div class="column is-2-widescreen is-hidden"></div></div><div class="columns foot"><div class="column is-3 is-offset-9 build-by">Build by <a href="https://github.com/ruanyf/loppo" target="_blank">Loppo</a> 0.6.20</div></div><div class="book-toc notification is-warning is-hidden"><h3>Table of chapters &nbsp;<span class="title-close"><a class="button is-danger"> Close</a></span></h3><ul class="chapter-area"><li class="chapter-item"><a href="fv1.html">操作系统形式化验证实践教程(1) - 证明第一个定理</a></li><li class="chapter-item"><a href="fv10.html">操作系统形式化验证实践教程(10) - 一阶直觉逻辑</a></li><li class="chapter-item"><a href="fv11.html">操作系统形式化验证实践教程(11) - 结构化证明语言Isar</a></li><li class="chapter-item"><a href="fv12.html">操作系统形式化验证实践教程(12) - 经典命题逻辑与公式查错方法</a></li><li class="chapter-item"><a href="fv13.html">操作系统形式化验证实践教程(13) - 符号的输入方法</a></li><li class="chapter-item"><a href="fv2.html">操作系统形式化验证实践教程(2) - HOL列表与集合</a></li><li class="chapter-item"><a href="fv3.html">操作系统形式化验证实践教程(3) - 自动证明工具</a></li><li class="chapter-item"><a href="fv4.html">操作系统形式化验证实践教程(4) - 工具环境</a></li><li class="chapter-item"><a href="fv5.html">操作系统形式化验证实践教程(5) - 搭建seL4环境</a></li><li class="chapter-item"><a href="fv6.html">操作系统形式化验证实践教程(6) - 解析C源代码</a></li><li class="chapter-item"><a href="fv7.html">操作系统形式化验证实践教程(7) - C代码的自动验证</a></li><li class="chapter-item chapter-item-current"><a href="fv8.html">操作系统形式化验证实践教程(8) - 用Haskell做系统建模</a></li><li class="chapter-item"><a href="fv9.html">操作系统形式化验证实践教程(9) - 规范与证明概述</a></li></ul></div><div class="progress-indicator"></div><!-- SCRIPTS --><script>var LOPPO={current_path:"fv8.md",relative_root_path:"",article_toc:'<ul class="markdownIt-TOC">\n<li><a href="#haskell%E5%AD%97%E9%95%BF%E5%A4%84%E7%90%86">Haskell字长处理</a></li>\n<li><a href="#%E5%AF%84%E5%AD%98%E5%99%A8">寄存器</a></li>\n<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>\n</ul>\n'}</script><script src="assets/js/app.js"></script></body></html>
