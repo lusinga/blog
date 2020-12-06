@@ -1,8 +1,8 @@
-dir: md
-output: blog
-site: 哲学系炼金术指南
+dir: docs
+output: dist
+site: Documents
 theme: oceandeep
 customization: false
 themeDir: loppo-theme
 direction: ltr
-id: web
+id: md
