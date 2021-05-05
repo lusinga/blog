@@ -43,7 +43,8 @@ it :: Bool
 ### 字符与字符串
 
 Haskell的字符串也是字符数组。字符用单引号，字符串用双引号：
-```
+
+```haskell
 Prelude> let c1 = 'C'
 c1 :: Char
 Prelude> c1
@@ -57,6 +58,7 @@ it :: [Char]
 ```
 
 我们用字符数组的方式来表示，结果获取的一样是个字符串，我们看个例子：
+
 ```haskell
 Prelude> let s3 = ['H','e']
 s3 :: [Char]
@@ -66,6 +68,7 @@ it :: [Char]
 ```
 
 字符串采用++进行连接：
+
 ```haskell
 Prelude> let s1 = "Hello" ++ "World"
 s1 :: [Char]
@@ -78,6 +81,7 @@ it :: [Char]
 
 Haskell的数值系统比较有趣。
 首先，底层没啥神秘的，像整数Int，单精度浮点数Floating，双精度浮点数Double之类的都如你所想：
+
 ```haskell
 Prelude> let a2 = 1 :: Double
 a2 :: Double
@@ -94,6 +98,7 @@ it :: Int
 在Standard ML中我们用":"来指示类型，而在Haskell中使用两个冒号。
 
 指定一个类型之后，剩下的类型由系统自动推断：
+
 ```haskell
 Prelude> let b2 = b1 * 2
 b2 :: Int
@@ -103,6 +108,7 @@ it :: Int
 ```
 
 如果一个整型与浮点数进行操作会报错：
+
 ```haskell
 Prelude> let b3 = b1 + 0.1
 
@@ -114,6 +120,7 @@ Prelude> let b3 = b1 + 0.1
 ```
 
 但是，如果不指定类型，一个整型字面值与浮点型字面值是可以计算的，因为系统默认是用Fractional类来处理它们的：
+
 ```haskell
 Prelude> let b4 = 1 + 0.1
 b4 :: Fractional a => a
@@ -123,7 +130,8 @@ it :: Fractional a => a
 ```
 
 Haskell也支持像log, sin, sqrt之类的数学函数，它们的返回值是Floating类型的：
-```hs
+
+```haskell
 Prelude> log(2)
 0.6931471805599453
 it :: Floating a => a
@@ -139,7 +147,8 @@ it :: Floating a => a
 
 与其它语言类似，Haskell使用"()"来表示元组。元组中的类型任意。
 例：
-```hs
+
+```haskell
 *Test2> let t2 = (2:: Int, 3::Double)
 t2 :: (Int, Double)
 *Test2> t2
@@ -152,7 +161,8 @@ it :: (Int, Double)
 作为一种函数式语言，Haskell当然也支持列表，也是用"[]"来表示，每个列表中的元素都是相同的。
 
 例：
-```hs
+
+```haskell
 *Test2> let l1 = [1::Int,2,3,4]
 l1 :: [Int]
 *Test2> l1
@@ -161,7 +171,8 @@ it :: [Int]
 ```
 
 不出意外的，Haskell也支持".."运算符生成序列：
-```hs
+
+```haskell
 *Test2> let l2 = [(1::Int)..10]
 l2 :: [Int]
 *Test2> l2
@@ -174,7 +185,8 @@ it :: [Int]
 下面我们开始在文件中写haskell源代码。
 haskell支持两种格式的代码：hs格式和lhs格式。
 其中hs格式就是普通的源代码了，举个例子：
-```hs
+
+```haskell
 module Test where
     double x = (+) x x
 ```
