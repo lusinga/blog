@@ -1,0 +1,8 @@
+dir: docs
+output: dist
+site: 哲学系炼金术士日记
+theme: oceandeep
+customization: false
+themeDir: loppo-theme
+direction: ltr
+id: 旭伦
